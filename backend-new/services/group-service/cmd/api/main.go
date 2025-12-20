@@ -25,6 +25,7 @@ func main() {
 	mux.HandleFunc("/GetGroupPosts", middleware.AuthMiddleware(handlers.GetGroupPosts))
 	mux.HandleFunc("/groups/not-member", middleware.AuthMiddleware(handlers.FetchNotMembers))
 	mux.HandleFunc("/groups/invite", middleware.AuthMiddleware(handlers.InviteToGroup))
+	mux.HandleFunc("/group/invite/respond", middleware.AuthMiddleware(handlers.RespondToGroupInvite))
 
 	// Event Routes
 	mux.HandleFunc("/create_event", middleware.AuthMiddleware(handlers.CreateEvent))

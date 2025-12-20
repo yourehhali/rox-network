@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"social-network/pkg/database"
 	"social-network/pkg/models"
+	sharedRepo "social-network/pkg/repository"
 )
 
 // Queries
@@ -138,18 +139,6 @@ func GetUserPosts(userID int) ([]models.Posts, error) {
 	return posts, nil
 }
 
-func GetUserName(userID int) string {
-	var name string
-	// Attempt to get username first, if not then first name? 
-	// Old code behavior: "GetUserNameById" usually returns username or fullname.
-	// Let's assume username.
-	err := database.DB.QueryRow("SELECT username FROM users WHERE id = ?", userID).Scan(&name)
-	if err != nil {
-		return ""
-	}
-	return name
-}
-
 func AddComment(userID, postID int, content, imagePath string) (int, error) {
 	res, err := database.DB.Exec(INSERT_NEW_COMMENT, userID, postID, content, imagePath)
 	if err != nil {
@@ -169,9 +158,9 @@ func GetCommentByID(id int) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	
-	username := GetUserName(uid)
-	
+
+	username, _ := sharedRepo.GetUsernameByID(uid)
+
 	return map[string]interface{}{
 		"id":         commentID,
 		"user_id":    username, // Legacy behavior: return username in user_id field
@@ -199,7 +188,7 @@ func GetCommentsByPostID(postID int) ([]map[string]interface{}, error) {
 		if err := rows.Scan(&id, &uid, &pid, &text, &createdAt, &imagePath); err != nil {
 			return nil, err
 		}
-		username := GetUserName(uid)
+		username, _ := sharedRepo.GetUsernameByID(uid)
 		comments = append(comments, map[string]interface{}{
 			"id":         id,
 			"user_id":    username, // Legacy behavior

@@ -35,6 +35,9 @@
 
 .actions {
     margin-top: 16px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
 }
 
 .joinBtn {
@@ -53,47 +56,143 @@
     opacity: 0.9;
 }
 
-.sectionTitle {
-    font-size: 1.4rem;
-    border-bottom: 1px solid #333;
-    padding-bottom: 10px;
-    margin-top: 20px;
+.actionBtn {
+    padding: 10px 20px;
+    border-radius: 24px;
+    background: #444;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
 }
 
-.posts {
+.memberBadge {
+    padding: 8px 16px;
+    background: #2a2a2a;
+    color: #4CAF50;
+    border-radius: 20px;
+    border: 1px solid #4CAF50;
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    gap: 20px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 10px;
+}
+
+.tab {
+    background: none;
+    border: none;
+    color: #aaa;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 8px 0;
+    position: relative;
+}
+
+.tab:hover {
+    color: white;
+}
+
+.activeTab {
+    color: #F3FFAB;
+    font-weight: bold;
+}
+
+.activeTab::after {
+    content: '';
+    position: absolute;
+    bottom: -11px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: #F3FFAB;
+}
+
+/* Content Areas */
+.content {
+    min-height: 300px;
+}
+
+/* Create Post Form */
+.createPostForm {
+    background: #1A1A1A;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.postInput, .postTextarea {
+    background: #2a2a2a;
+    border: 1px solid #333;
+    color: white;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.postTextarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.postBtn {
+    align-self: flex-end;
+    background: #F3FFAB;
+    color: black;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* Lists */
+.postsList, .eventsList, .membersList {
     display: flex;
     flex-direction: column;
     gap: 16px;
 }
 
-.post {
+.postCard, .eventCard, .memberCard {
     background: #1A1A1A;
-    border-radius: 16px;
+    border-radius: 12px;
     padding: 20px;
     border: 1px solid #333;
-    transition: transform 0.2s;
 }
 
-.post:hover {
-    background-color: #232323;
+.postCard h3, .eventCard h3 {
+    margin: 0 0 10px 0;
+    color: #fff;
 }
 
-.postTitle {
-    font-weight: bold;
-    font-size: 1.2rem;
-    margin-bottom: 8px;
-    color: white;
-}
-
-.postContent {
-    color: #ccc;
-    line-height: 1.5;
-}
-
-.empty {
+.date, .eventTime {
+    display: block;
+    font-size: 0.8rem;
     color: #666;
-    text-align: center;
-    padding: 40px;
-    background: #1A1A1A;
-    border-radius: 16px;
+    margin-top: 10px;
+}
+
+.eventActions {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+}
+
+.eventActions button {
+    padding: 6px 12px;
+    border-radius: 12px;
+    border: 1px solid #444;
+    background: #2a2a2a;
+    color: white;
+    cursor: pointer;
+}
+
+.eventActions button:hover {
+    background: #333;
 }

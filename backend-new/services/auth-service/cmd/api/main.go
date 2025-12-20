@@ -18,6 +18,14 @@ func main() {
 	database.InitDB(dbPath)
 	fmt.Println("Auth Service connected to database at", dbPath)
 
+	// Execute Schema to ensure tables exist
+	schemaPath := "../../database/schema.sql"
+	if err := database.ExecuteSchema(database.DB, schemaPath); err != nil {
+		log.Printf("Warning: Failed to execute schema: %v", err)
+	} else {
+		fmt.Println("Database schema executed successfully.")
+	}
+
 	mux := http.NewServeMux()
 
 	// Routes

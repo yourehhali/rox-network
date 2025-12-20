@@ -8,7 +8,9 @@ export default function FollowRequest({ notification, onHandled }) {
   const [status, setStatus] = useState(
     request.receiver_is_private === true || request.message === "request"
       ? "pending"
-      : request.message
+      : request.message === "started following you" 
+        ? "accepted" 
+        : request.message
   );
 
   const handleFollowAction = async (senderId, action) => {

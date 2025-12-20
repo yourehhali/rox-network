@@ -102,13 +102,6 @@ func GetGroups(userID int) ([]GroupWithStatus, error) {
 	return groups, nil
 }
 
-// GetUserName retrieves username by ID
-func GetUserName(userID int) (string, error) {
-	var username string
-	err := database.DB.QueryRow("SELECT username FROM users WHERE id = ?", userID).Scan(&username)
-	return username, err
-}
-
 // GetGroupByID returns a single group
 func GetGroupByID(groupID int) (*Group, error) {
 	var g Group
@@ -134,6 +127,39 @@ func GetGroupMembers(groupID int) ([]int, error) {
 			return nil, err
 		}
 		members = append(members, id)
+	}
+	return members, nil
+}
+
+type GroupMember struct {
+	ID        int    `json:"id"`
+	Username  string `json:"username"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Avatar    string `json:"avatar"`
+	Status    string `json:"status"`
+}
+
+// GetGroupMembersDetails returns user details of group members
+func GetGroupMembersDetails(groupID int) ([]GroupMember, error) {
+	rows, err := database.DB.Query(`
+		SELECT u.id, u.username, u.first_name, u.last_name, COALESCE(u.avatar, ''), gm.status
+		FROM group_members gm
+		JOIN users u ON gm.user_id = u.id
+		WHERE gm.group_id = ? AND gm.status = 'member'
+	`, groupID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var members []GroupMember
+	for rows.Next() {
+		var m GroupMember
+		if err := rows.Scan(&m.ID, &m.Username, &m.FirstName, &m.LastName, &m.Avatar, &m.Status); err != nil {
+			continue
+		}
+		members = append(members, m)
 	}
 	return members, nil
 }

@@ -83,17 +83,21 @@ type FollowResponse struct {
 }
 
 func SetFollowers(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("DEBUG: SetFollowers handler called")
 	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
 	if !ok {
+		fmt.Println("DEBUG: Unauthorized access in SetFollowers")
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
 	var req FollowRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		fmt.Printf("DEBUG: Invalid request body in SetFollowers: %v\n", err)
 		http.Error(w, "invalid request", http.StatusBadRequest)
 		return
 	}
+	fmt.Printf("DEBUG: User %d toggling follow for %d\n", userID, req.FollowedID)
 
 	var status string
 	isPending, _ := repository.IsPending(userID, req.FollowedID)
@@ -101,7 +105,14 @@ func SetFollowers(w http.ResponseWriter, r *http.Request) {
 	if isPending {
 		// Cancel request
 		repository.RemoveFollow(userID, req.FollowedID)
-		status = "cancelled" // Logic from old code seems to just remove
+		status = "cancelled"
+		// Remove the pending request notification from the user
+		_ = sendInternalNotification(models.Notification{
+			UserID:   req.FollowedID,
+			Type:     "notification_removed",
+			Message:  "Invitation_friendships",
+			SenderID: userID,
+		})
 	}
 
 	isFollowing, err := repository.IsFollowing(userID, req.FollowedID)
@@ -113,6 +124,13 @@ func SetFollowers(w http.ResponseWriter, r *http.Request) {
 	if isFollowing {
 		repository.RemoveFollow(userID, req.FollowedID)
 		status = "unfollowed"
+		// Remove the "new_follower" notification
+		_ = sendInternalNotification(models.Notification{
+			UserID:   req.FollowedID,
+			Type:     "notification_removed",
+			Message:  "started following you",
+			SenderID: userID,
+		})
 	} else if !isPending {
 		// Start following
 		isPrivate, err := repository.IsUserPrivate(req.FollowedID)
@@ -137,6 +155,13 @@ func SetFollowers(w http.ResponseWriter, r *http.Request) {
 				SenderID: userID,
 				Type:     "Invitation_friendships",
 				Message:  "request",
+			})
+		} else if status == "accepted" {
+			_ = sendInternalNotification(models.Notification{
+				UserID:   req.FollowedID,
+				SenderID: userID,
+				Type:     "new_follower",
+				Message:  "started following you",
 			})
 		}
 	}
@@ -212,6 +237,14 @@ func RequestFollow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Remove the original request notification for the Receiver (me)
+	_ = sendInternalNotification(models.Notification{
+		UserID:   receiverID,
+		Type:     "notification_removed",
+		Message:  "Invitation_friendships",
+		SenderID: input.SenderID,
+	})
+
 	// Return updated counts for receiver (optional)
 	followersCount, _ := repository.GetFollowersCount(receiverID)
 	followingCount, _ := repository.GetFollowingCount(receiverID)
@@ -224,13 +257,16 @@ func RequestFollow(w http.ResponseWriter, r *http.Request) {
 
 // sendInternalNotification posts to chat-service internal notification endpoint
 func sendInternalNotification(n models.Notification) error {
+	fmt.Printf("DEBUG: Sending notification: %+v\n", n)
 	b, _ := json.Marshal(n)
 	// Direct call to chat-service internal endpoint
 	resp, err := http.Post("http://localhost:8085/internal/notification", "application/json", bytes.NewReader(b))
 	if err != nil {
+		fmt.Printf("DEBUG: Error sending notification: %v\n", err)
 		return err
 	}
 	defer resp.Body.Close()
+	fmt.Println("DEBUG: Notification sent successfully")
 	return nil
 }
 

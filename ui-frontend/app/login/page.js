@@ -62,7 +62,7 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit}>
           <div className={style.inputGroup}>
             <input
-              type="email"
+              type="text"
               required
               className={style.input}
               placeholder="Email address"

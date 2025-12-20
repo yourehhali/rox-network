@@ -1,2 +1,8 @@
 Chat Service running on :8085
-2025/12/18 12:12:13 Error scanning notification: sql: Scan error on column index 12, name "is_private": converting driver.Value type bool ("false") to a int: invalid syntax
+2025/12/20 06:43:00 User 1 connected to Chat
+2025/12/20 06:43:01 User 1 connected to Chat
+2025/12/20 06:43:53 DEBUG: Chat Service Received Notification: {ID:0 UserID:2 SenderID:1 Type:event_created Message:New event in group: test State: CreatedAt: EventID:3 Sender:{ID:0 Username: Email: FirstName: LastName: Age:<nil> Gender:<nil> Nickname:<nil> About:<nil> Avatar:<nil> CreatedAt: UpdatedAt: IsPrivate:<nil>} ReceiverIsPrivate:false GroupTitle: GroupID:1}
+2025/12/20 06:44:03 User 1 connected to Notifications
+2025/12/20 06:44:26 User 2 connected to Notifications
+2025/12/20 06:44:31 DEBUG: Chat Service Received Notification: {ID:0 UserID:2 SenderID:0 Type:notification_removed Message:event_created State: CreatedAt: EventID:3 Sender:{ID:0 Username: Email: FirstName: LastName: Age:<nil> Gender:<nil> Nickname:<nil> About:<nil> Avatar:<nil> CreatedAt: UpdatedAt: IsPrivate:<nil>} ReceiverIsPrivate:false GroupTitle: GroupID:0}
+2025/12/20 06:45:02 User 2 connected to Chat

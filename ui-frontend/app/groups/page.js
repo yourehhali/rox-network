@@ -5,21 +5,24 @@ import { apiFetch } from "../../lib/api";
 import LeftBar from "../components/sidebar/left/leftBar.js";
 import RightBar from "../components/sidebar/right/rightBar.js";
 import Link from "next/link";
+import CreateGroupModal from "../components/groups/CreateGroupModal";
 
 export default function GroupsPage() {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const loadGroups = async () => {
+    try {
+      const res = await apiFetch("/Get_Groups");
+      if (res.ok) {
+        const data = await res.json();
+        setGroups(Array.isArray(data) ? data : []);
+      }
+    } catch (_) {}
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const loadGroups = async () => {
-      try {
-        const res = await apiFetch("/Get_Groups");
-        if (res.ok) {
-          const data = await res.json();
-          setGroups(Array.isArray(data) ? data : []);
-        }
-      } catch (_) {}
-      setLoading(false);
-    };
     loadGroups();
   }, []);
 
@@ -27,7 +30,10 @@ export default function GroupsPage() {
     <div className={styles.container}>
       <LeftBar />
       <main className={styles.main}>
-        <h1>Groups</h1>
+        <div className={styles.header}>
+          <h1>Groups</h1>
+          <CreateGroupModal onSuccess={loadGroups} />
+        </div>
         {loading ? (
           <div>Loading...</div>
         ) : (

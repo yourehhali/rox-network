@@ -69,29 +69,6 @@ func GetNotificationClient(userID int) *websocket.Conn {
 	return NotificationClients[userID]
 }
 
-// VerifySession verifies the session token and returns the user ID
-func VerifySession(token string) (int, error) {
-	var userID int
-	err := database.DB.QueryRow("SELECT user_id FROM sessions WHERE session_token = ?", token).Scan(&userID)
-	if err != nil {
-		return 0, err
-	}
-	return userID, nil
-}
-
-// GetUserInfo retrieves basic user info
-func GetUserInfo(userID int) (*models.User, error) {
-	var u models.User
-	err := database.DB.QueryRow(`
-		SELECT id, username, first_name, last_name, avatar, is_private 
-		FROM users WHERE id = ?`, userID).
-		Scan(&u.ID, &u.Username, &u.FirstName, &u.LastName, &u.Avatar, &u.IsPrivate)
-	if err != nil {
-		return nil, err
-	}
-	return &u, nil
-}
-
 // CanUsersChat checks if two users can chat
 func CanUsersChat(user1, user2 int) (bool, error) {
 	// Logic: Follow each other OR user2 is public
@@ -217,8 +194,8 @@ func UpdateNotificationStatus(id int, state string) error {
 
 // UpdateInvitationStatus updates the state of an invitation (follow request)
 func UpdateInvitationStatus(receiverID, senderID int, state string) error {
-    _, err := database.DB.Exec("UPDATE notifications SET state = ? WHERE user_id = ? AND sender_id = ? AND type = 'Invitation_friendships' AND message = 'request'", state, receiverID, senderID)
-    return err
+	_, err := database.DB.Exec("UPDATE notifications SET state = ? WHERE user_id = ? AND sender_id = ? AND type = 'Invitation_friendships' AND message = 'request'", state, receiverID, senderID)
+	return err
 }
 
 // GetGroupMembers retrieves members of a group
@@ -247,20 +224,8 @@ func IsUserGroupMember(userID, groupID int) (bool, error) {
 	return count > 0, nil
 }
 
-// Message struct for history (local definition to match repository return)
-type Message struct {
-	ID         int         `json:"id"`
-	SenderID   int         `json:"sender_id"`
-	ReceiverID *int        `json:"receiver_id,omitempty"`
-	GroupID    *int        `json:"group_id,omitempty"`
-	Content    string      `json:"content"`
-	IsEmoji    bool        `json:"is_emoji"`
-	CreatedAt  string      `json:"created_at"`
-	Sender     models.User `json:"sender"`
-}
-
 // GetPrivateMessages retrieves private chat history
-func GetPrivateMessages(userID, otherUserID int) ([]Message, error) {
+func GetPrivateMessages(userID, otherUserID int) ([]models.Message, error) {
 	query := `
 		SELECT m.id, m.sender_id, m.content, m.is_emoji, m.created_at,
 		       u.id, u.username, u.first_name, u.last_name, u.avatar
@@ -275,9 +240,9 @@ func GetPrivateMessages(userID, otherUserID int) ([]Message, error) {
 	}
 	defer rows.Close()
 
-	messages := make([]Message, 0)
+	messages := make([]models.Message, 0)
 	for rows.Next() {
-		var msg Message
+		var msg models.Message
 		var createdAt time.Time
 		err := rows.Scan(
 			&msg.ID, &msg.SenderID, &msg.Content, &msg.IsEmoji, &createdAt,
@@ -294,7 +259,7 @@ func GetPrivateMessages(userID, otherUserID int) ([]Message, error) {
 }
 
 // GetGroupMessages retrieves group chat history
-func GetGroupMessages(groupID int) ([]Message, error) {
+func GetGroupMessages(groupID int) ([]models.Message, error) {
 	query := `
 		SELECT m.id, m.sender_id, m.content, m.is_emoji, m.created_at,
 		       u.id, u.username, u.first_name, u.last_name, u.avatar
@@ -309,9 +274,9 @@ func GetGroupMessages(groupID int) ([]Message, error) {
 	}
 	defer rows.Close()
 
-	messages := make([]Message, 0)
+	messages := make([]models.Message, 0)
 	for rows.Next() {
-		var msg Message
+		var msg models.Message
 		var createdAt time.Time
 		err := rows.Scan(
 			&msg.ID, &msg.SenderID, &msg.Content, &msg.IsEmoji, &createdAt,

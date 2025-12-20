@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
-	"social-network/pkg/database"
+	"social-network/pkg/repository"
 )
 
 type contextKey string
@@ -29,9 +29,7 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		// Validate session against DB (Shared DB pattern for migration)
-		var userID int
-		// Query: SELECT_USER_BY_SESSION_TOKEN
-		err = database.DB.QueryRow("SELECT user_id FROM sessions WHERE session_token = ?", ses.Value).Scan(&userID)
+		userID, err := repository.GetUserIDBySessionToken(ses.Value)
 
 		if err != nil {
 			if err == sql.ErrNoRows {

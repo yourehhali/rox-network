@@ -1,10 +1,12 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { useAuth } from "../../context/AuthContext";
 import { apiFetch, toMediaUrl } from "../../lib/api";
 import LeftBar from "../components/sidebar/left/leftBar.js";
 import style from "./chat.module.css";
 
 export default function ChatPage() {
+  const { user } = useAuth();
   const [friends, setFriends] = useState([]);
   const [activeUser, setActiveUser] = useState(null);
   const [messages, setMessages] = useState([]);

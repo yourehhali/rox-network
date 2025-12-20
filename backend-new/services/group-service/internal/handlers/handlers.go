@@ -10,6 +10,7 @@ import (
 	"os"
 	"social-network/pkg/middleware"
 	"social-network/pkg/models"
+	sharedRepo "social-network/pkg/repository"
 	"strconv"
 	"strings"
 	"time"
@@ -17,13 +18,15 @@ import (
 
 // Helper to send notification to chat-service
 func sendNotification(n models.Notification) {
+	fmt.Printf("DEBUG: Sending notification: %+v\n", n)
 	data, _ := json.Marshal(n)
 	resp, err := http.Post("http://localhost:8085/internal/notification", "application/json", bytes.NewBuffer(data))
 	if err != nil {
-		fmt.Printf("Error sending notification: %v\n", err)
+		fmt.Printf("DEBUG: Error sending notification: %v\n", err)
 		return
 	}
 	defer resp.Body.Close()
+	fmt.Println("DEBUG: Notification sent successfully")
 }
 
 // CreateGroup handles group creation
@@ -49,7 +52,9 @@ func CreateGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repository.InsertGroupMember(int(groupID), userID, "member") // Admin is member
+	if err := repository.InsertGroupMember(int(groupID), userID, "member"); err != nil {
+		fmt.Printf("Error adding creator as member: %v\n", err)
+	}
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{"id": groupID, "status": "created"})
 }
@@ -106,7 +111,7 @@ func RequestJoin(w http.ResponseWriter, r *http.Request) {
 	// Notify Creator
 	group, _ := repository.GetGroupByID(req.GroupID)
 	if group != nil {
-		username, _ := repository.GetUserName(userID)
+		username, _ := sharedRepo.GetUsernameByID(userID)
 		msg := fmt.Sprintf("The user %s sent a request to join group %s", username, group.Title)
 		sendNotification(models.Notification{
 			UserID:   group.CreatorID,
@@ -160,6 +165,50 @@ func AcceptRejectJoin(w http.ResponseWriter, r *http.Request) {
 	} else {
 		repository.RemoveGroupMember(req.GroupID, req.UserID)
 	}
+
+	// Remove the request notification for the Creator (myself)
+	sendNotification(models.Notification{
+		UserID:   userID,
+		Type:     "notification_removed",
+		Message:  "request_join_group",
+		SenderID: req.UserID, // The user who made the request
+		GroupID:  req.GroupID,
+	})
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// RespondToGroupInvite handles invite response
+func RespondToGroupInvite(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	var req struct {
+		GroupID int    `json:"group_id"`
+		Status  string `json:"status"` // 'accept', 'reject'
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+
+	if req.Status == "accept" {
+		repository.UpdateGroupMemberStatus(req.GroupID, userID, "member")
+	} else {
+		repository.RemoveGroupMember(req.GroupID, userID)
+	}
+
+	// Remove notification for this user
+	sendNotification(models.Notification{
+		UserID:  userID,
+		Type:    "notification_removed",
+		Message: "group_invite",
+		GroupID: req.GroupID,
+	})
+
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -187,7 +236,45 @@ func GetGroupByID(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Not found", http.StatusNotFound)
 		return
 	}
-	json.NewEncoder(w).Encode(group)
+
+	// Fetch members
+	members, _ := repository.GetGroupMembersDetails(id)
+
+	// Check if current user is member
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+	var userStatus string
+	if ok {
+		// We can reuse GetGroups or just query simply
+		// But GetGroups gets all groups.
+		// Let's just check quickly if they are in members list?
+		// Or query DB.
+		// For efficiency, since we have members list, we can check it.
+		for _, m := range members {
+			if m.ID == userID {
+				userStatus = "member"
+				break
+			}
+		}
+		// If not found in members, they might be pending/requested?
+		// GetGroupMembersDetails only returns 'member' status.
+		// If we want accurate status (pending etc), we should query DB.
+		// But let's stick to what we have or improve repository.
+	}
+
+	// Construct response
+	response := map[string]interface{}{
+		"group": map[string]interface{}{
+			"id":          group.ID,
+			"title":       group.Title,
+			"description": group.Description,
+			"creator_id":  group.CreatorID,
+			"is_member":   userStatus == "member", // specific field for frontend
+			"user_status": userStatus,
+		},
+		"members": members,
+	}
+
+	json.NewEncoder(w).Encode(response)
 }
 
 // CreateGroupPost handles posting to a group
@@ -292,7 +379,7 @@ func InviteToGroup(w http.ResponseWriter, r *http.Request) {
 
 	// Notify Invitee
 	group, _ := repository.GetGroupByID(req.GroupID)
-	inviterName, _ := repository.GetUserName(userID)
+	inviterName, _ := sharedRepo.GetUsernameByID(userID)
 	msg := fmt.Sprintf("%s invited you to join group %s", inviterName, group.Title)
 
 	sendNotification(models.Notification{
@@ -386,5 +473,14 @@ func RespondToEvent(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Server error", http.StatusInternalServerError)
 		return
 	}
+
+	// Remove "event_created" notification for this event
+	sendNotification(models.Notification{
+		UserID:  userID,
+		Type:    "notification_removed",
+		Message: "event_created",
+		EventID: req.EventID,
+	})
+
 	w.WriteHeader(http.StatusOK)
 }

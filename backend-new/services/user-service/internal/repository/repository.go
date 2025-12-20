@@ -32,7 +32,7 @@ func GetUserInfo(userId int) (models.User, error) {
 	var nickname sql.NullString
 	var about sql.NullString
 	var avatar sql.NullString
-	var isPrivate sql.NullBool
+	var isPrivate sql.NullInt64
 
 	err := database.DB.QueryRow(SELECT_USER_BY_ID, userId).Scan(
 		&user.ID,
@@ -71,12 +71,7 @@ func GetUserInfo(userId int) (models.User, error) {
 		user.Avatar = &avatar.String
 	}
 	if isPrivate.Valid {
-		var p int
-		if isPrivate.Bool {
-			p = 1
-		} else {
-			p = 0
-		}
+		p := int(isPrivate.Int64)
 		user.IsPrivate = &p
 	}
 	return user, nil
@@ -125,7 +120,7 @@ func RemoveFollow(followerID, followedID int) error {
 }
 
 func IsUserPrivate(userID int) (bool, error) {
-	var isPrivate sql.NullBool
+	var isPrivate sql.NullInt64
 	err := database.DB.QueryRow(CHECK_PRIVACY, userID).Scan(&isPrivate)
 	if err != nil {
 		return false, err
@@ -133,7 +128,7 @@ func IsUserPrivate(userID int) (bool, error) {
 	if !isPrivate.Valid {
 		return false, nil
 	}
-	return isPrivate.Bool, nil
+	return isPrivate.Int64 == 1, nil
 }
 
 // UpdateFollowStatus sets status for an existing follow row

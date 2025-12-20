@@ -1,11 +1,12 @@
 package handlers
 
 import (
-	"chat-service/internal/repository"
+	repository "chat-service/internal/repository"
 	"encoding/json"
 	"log"
 	"net/http"
 	"social-network/pkg/models"
+	sharedRepo "social-network/pkg/repository"
 	"strconv"
 	"time"
 
@@ -23,7 +24,7 @@ func ChatWebSocket(w http.ResponseWriter, r *http.Request) {
 	// 1. Try to authenticate via Cookie first
 	var userID int
 	if cookie, err := r.Cookie("session"); err == nil {
-		userID, _ = repository.VerifySession(cookie.Value)
+		userID, _ = sharedRepo.GetUserIDBySessionToken(cookie.Value)
 	}
 
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -48,7 +49,7 @@ func ChatWebSocket(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		userID, err = repository.VerifySession(sessionToken)
+		userID, err = sharedRepo.GetUserIDBySessionToken(sessionToken)
 		if err != nil {
 			conn.Close()
 			return
@@ -93,7 +94,7 @@ func handlePrivateMessage(senderID int, msg map[string]interface{}) {
 	}
 
 	msgID, _ := repository.SaveMessage(senderID, &receiverID, nil, content, isEmoji)
-	sender, _ := repository.GetUserInfo(senderID)
+	sender, _ := sharedRepo.GetBasicUserInfo(senderID)
 
 	resp := map[string]interface{}{
 		"type":        "private_message",
@@ -130,7 +131,7 @@ func handleGroupMessage(senderID int, msg map[string]interface{}) {
 	}
 
 	msgID, _ := repository.SaveMessage(senderID, nil, &groupID, content, isEmoji)
-	sender, _ := repository.GetUserInfo(senderID)
+	sender, _ := sharedRepo.GetBasicUserInfo(senderID)
 
 	resp := map[string]interface{}{
 		"type":       "group_message",
@@ -203,14 +204,14 @@ func NotificationWebSocket(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("session")
 	var userID int
 	if err == nil {
-		userID, _ = repository.VerifySession(cookie.Value)
+		userID, _ = sharedRepo.GetUserIDBySessionToken(cookie.Value)
 	}
 
 	// If no cookie or invalid, try query param?
 	if userID == 0 {
 		token := r.URL.Query().Get("session")
 		if token != "" {
-			userID, _ = repository.VerifySession(token)
+			userID, _ = sharedRepo.GetUserIDBySessionToken(token)
 		}
 	}
 
@@ -244,7 +245,19 @@ func NotificationWebSocket(w http.ResponseWriter, r *http.Request) {
 func HandleInternalNotification(w http.ResponseWriter, r *http.Request) {
 	var n models.Notification
 	if err := json.NewDecoder(r.Body).Decode(&n); err != nil {
+		log.Printf("DEBUG: Invalid JSON in HandleInternalNotification: %v", err)
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("DEBUG: Chat Service Received Notification: %+v", n)
+
+	// If type is notification_removed, just broadcast and return (don't save to DB)
+	if n.Type == "notification_removed" {
+		if conn := repository.GetNotificationClient(n.UserID); conn != nil {
+			conn.WriteJSON(n)
+		}
+		w.WriteHeader(http.StatusOK)
 		return
 	}
 
@@ -257,13 +270,13 @@ func HandleInternalNotification(w http.ResponseWriter, r *http.Request) {
 		// Let's look at user-service RequestFollow:
 		// input.SenderID is the one who asked to follow. receiverID is the one accepting.
 		// Notification sent: UserID=input.SenderID (requester), SenderID=receiverID (accepter).
-		
+
 		// But we ALSO need to update the notification for the *accepter* so the "Accept/Reject" buttons go away?
 		// Actually, the "Accept/Reject" UI usually depends on the list of *pending* requests.
 		// If the user-service `RequestFollow` updates the DB status to 'accepted', the pending list logic (fetching from DB) should handle it.
 		// However, the `notifications` table in chat-service might still show the "request" notification.
 		// We should mark the "request" notification for the *accepter* as handled.
-		
+
 		// The `n` here is the notification being sent to the *Requester* saying "You were accepted".
 		// We want to update the notification that was sent to the *Accepter* (n.SenderID) from the *Requester* (n.UserID).
 		// So we update: UserID = n.SenderID, SenderID = n.UserID.
@@ -280,7 +293,7 @@ func HandleInternalNotification(w http.ResponseWriter, r *http.Request) {
 
 	// Enrich with Sender info if missing (though sender usually sends ID)
 	if n.Sender.Username == "" {
-		sender, _ := repository.GetUserInfo(n.SenderID)
+		sender, _ := sharedRepo.GetBasicUserInfo(n.SenderID)
 		if sender != nil {
 			n.Sender = *sender
 		}
@@ -302,7 +315,7 @@ func GetNotifications(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("session")
 	var userID int
 	if err == nil {
-		userID, _ = repository.VerifySession(cookie.Value)
+		userID, _ = sharedRepo.GetUserIDBySessionToken(cookie.Value)
 	}
 	if userID == 0 {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -324,7 +337,7 @@ func GetPrivateChatHistory(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("session")
 	var userID int
 	if err == nil {
-		userID, _ = repository.VerifySession(cookie.Value)
+		userID, _ = sharedRepo.GetUserIDBySessionToken(cookie.Value)
 	}
 	if userID == 0 {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -363,7 +376,7 @@ func GetGroupChatHistory(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("session")
 	var userID int
 	if err == nil {
-		userID, _ = repository.VerifySession(cookie.Value)
+		userID, _ = sharedRepo.GetUserIDBySessionToken(cookie.Value)
 	}
 	if userID == 0 {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)

@@ -104,6 +104,7 @@ func main() {
 			path == "/CreateGroupPost" ||
 			path == "/GetGroupPosts" ||
 			strings.HasPrefix(path, "/groups/") ||
+			strings.HasPrefix(path, "/group/") ||
 			path == "/create_event" ||
 			path == "/group-events" ||
 			path == "/event-invite-response":

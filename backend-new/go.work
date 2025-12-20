@@ -9,4 +9,5 @@ use (
 	./services/media-service
 	./services/post-service
 	./services/user-service
+	./verification
 )

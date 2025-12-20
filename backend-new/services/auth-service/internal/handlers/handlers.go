@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	sharedRepo "social-network/pkg/repository"
 	"social-network/pkg/utils"
 	"strconv"
 	"strings"
@@ -69,7 +70,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteLaxMode,
 		Path:     "/", // Important for cookie to be sent to all paths
 	})
-	err = repository.UpdateUserSession(userId, session)
+	err = sharedRepo.UpdateUserSession(userId, session)
 	if err != nil {
 		http.Error(w, "Server error", http.StatusInternalServerError)
 		return
@@ -188,6 +189,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func CheckState(w http.ResponseWriter, r *http.Request) {
+	// CheckState ...
 	session, err := r.Cookie("session")
 	if err != nil {
 		w.WriteHeader(http.StatusOK)
@@ -197,8 +199,8 @@ func CheckState(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, login, err := repository.SelectUserSession(session.Value)
-	if err != nil || !login {
+	id, err := sharedRepo.GetUserIDBySessionToken(session.Value)
+	if err != nil {
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]any{
 			"authenticated": false,
