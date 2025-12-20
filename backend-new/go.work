@@ -1,0 +1,12 @@
+go 1.24.2
+
+use (
+	./api-gateway
+	./pkg
+	./services/auth-service
+	./services/chat-service
+	./services/group-service
+	./services/media-service
+	./services/post-service
+	./services/user-service
+)

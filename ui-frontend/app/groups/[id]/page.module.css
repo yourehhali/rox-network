@@ -1,0 +1,99 @@
+.container {
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+    gap: 20px;
+}
+
+.main {
+    flex: 1;
+    max-width: 800px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    color: white;
+}
+
+.header {
+    border-bottom: 1px solid #333;
+    padding-bottom: 20px;
+    margin-bottom: 10px;
+}
+
+.title {
+    font-size: 2rem;
+    color: #F3FFAB;
+    margin-bottom: 8px;
+}
+
+.desc {
+    color: #aaa;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.actions {
+    margin-top: 16px;
+}
+
+.joinBtn {
+    padding: 10px 24px;
+    border-radius: 24px;
+    background: #F3FFAB;
+    border: none;
+    cursor: pointer;
+    color: black;
+    font-weight: bold;
+    font-size: 1rem;
+    transition: opacity 0.2s;
+}
+
+.joinBtn:hover {
+    opacity: 0.9;
+}
+
+.sectionTitle {
+    font-size: 1.4rem;
+    border-bottom: 1px solid #333;
+    padding-bottom: 10px;
+    margin-top: 20px;
+}
+
+.posts {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.post {
+    background: #1A1A1A;
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid #333;
+    transition: transform 0.2s;
+}
+
+.post:hover {
+    background-color: #232323;
+}
+
+.postTitle {
+    font-weight: bold;
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+    color: white;
+}
+
+.postContent {
+    color: #ccc;
+    line-height: 1.5;
+}
+
+.empty {
+    color: #666;
+    text-align: center;
+    padding: 40px;
+    background: #1A1A1A;
+    border-radius: 16px;
+}

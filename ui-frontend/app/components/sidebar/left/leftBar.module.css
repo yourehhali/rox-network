@@ -1,0 +1,92 @@
+.leftSidebar {
+    min-height: 100vh;
+    min-height: 100svh;
+    width: 140px;
+    flex-shrink: 0;
+    background-color: #0A0A0A;
+    padding: 20px;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    width: 100px;
+    min-height: 90svh;
+    position: fixed;
+    padding: 20px;
+    border-radius: 30px;
+    background-color: #1A1A1A;
+
+}
+
+.topSection,
+.bottomSection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+}
+
+.plusIcon {
+    color: black;
+    background-color: #F3FFAB;
+    display: flex;
+    align-items: center;
+    height: 70px;
+    width: 70px;
+    justify-content: center;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.plusIcon:hover {
+    transform: rotate(20deg);
+    scale: 1.1;
+}
+
+.logo {
+    display: flex;
+    justify-content: center;
+    background-color: #F3FFAB;
+    align-items: center;
+    height: 70px;
+    width: 70px;
+    padding: 10px;
+    border-radius: 50%;
+    transition: all 0.2s ease-in-out;
+}
+
+.logo:hover {
+    transform: rotate(20deg);
+}
+
+.menu {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    color: white;
+}
+
+.menuItem {
+    cursor: pointer;
+    color: white;
+    background-color: #313131;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    height: 54px;
+    width: 54px;
+    transition: all 0.2s ease-in-out;
+}
+
+.menuItem:hover {
+    color: #F3FFAB;
+    scale: 1.07;
+    background-color: #F3FFAB33;
+}

@@ -1,0 +1,124 @@
+.profileCardContainer {
+    padding: 0 0 20px 0;
+    color: white;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.profileCoverImage {
+    width: 100%;
+    height: 250px;
+    border-radius: 20px;
+    position: relative;
+    margin-bottom: 60px; /* Space for avatar overlap */
+}
+
+.coverImage {
+    width: 100%;
+    height: 100%;
+    border-radius: 20px;
+    object-fit: cover;
+}
+
+.overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border-radius: 20px;
+    background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.8));
+}
+
+.profileInfo {
+    position: absolute;
+    bottom: -50px;
+    left: 40px;
+    display: flex;
+    align-items: flex-end;
+    gap: 20px;
+    width: calc(100% - 80px);
+}
+
+.avatar {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #121212; /* Match background */
+    background: #121212;
+}
+
+.userInfo {
+    flex: 1;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.name {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+}
+
+.username {
+    color: #aaa;
+    margin: 0;
+    font-size: 1rem;
+}
+
+.stats {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+    padding: 0 40px;
+}
+
+.statItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.statValue {
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: white;
+}
+
+.statLabel {
+    color: #888;
+    font-size: 0.9rem;
+}
+
+.actions {
+    margin-bottom: 15px;
+}
+
+.followButton {
+    padding: 10px 24px;
+    border-radius: 20px;
+    background: #F3FFAB;
+    color: black;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.followButton:hover {
+    opacity: 0.9;
+}
+
+.unfollowButton {
+    background: #333;
+    color: white;
+}
+
+.description {
+    padding: 0 40px;
+    color: #ccc;
+    line-height: 1.5;
+    margin-top: 10px;
+}

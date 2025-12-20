@@ -1,0 +1,69 @@
+.container {
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+    gap: 20px;
+}
+
+.main {
+    flex: 1;
+    max-width: 800px; /* Limit width for better readability */
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.main h1 {
+    color: #F3FFAB;
+    font-size: 2rem;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 16px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    width: 100%;
+}
+
+.cardLink {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.card {
+    background: #1A1A1A;
+    border-radius: 20px;
+    padding: 20px;
+    transition: all 0.3s ease;
+    border: 1px solid #333;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: 100%;
+    min-height: 150px;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    background-color: #232323;
+    border-color: #F3FFAB;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.cardTitle {
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: #fff;
+}
+
+.cardDesc {
+    color: #aaa;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    flex: 1;
+}

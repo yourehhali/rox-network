@@ -1,0 +1,82 @@
+.widget{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 20px;
+    padding: 12px;
+    background-color: #1A1A1A;
+    border-radius: 30px;
+}
+.notifications{
+    color: white;
+    background-color: #313131;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    height: 54px;
+    width: 54px;
+    transition: all 0.2s ease-in-out;
+}
+.userAvatar,.avatarImage{
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.userAvatar{
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+.userAvatar:hover{
+    scale: 1.1;
+}
+.onlineIndicator{
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background-color: #F3FFAB;
+    border: 2px solid #1A1A1A;
+}
+.notifications:hover {
+    color: #F3FFAB;
+    scale: 1.07;
+    background-color: #F3FFAB33;
+}
+.notificationsPanel{
+    position: absolute;
+    right: 16px;
+    top: 80px;
+    width: 300px;
+    max-height: 400px;
+    overflow-y: auto;
+    background-color: #1A1A1A;
+    border: 1px solid #313131;
+    border-radius: 20px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 10;
+}
+.notificationItem{
+    background-color: #232323;
+    padding: 10px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: white;
+}
+.notificationTitle{
+    font-weight: bold;
+    color: #F3FFAB;
+}
+.notificationMessage{
+    color: #ccc;
+    font-size: 0.9rem;
+}

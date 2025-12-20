@@ -1,0 +1,21 @@
+.postsFeedContainer{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 24px;
+    
+    max-width: calc((320px * 5) + (24px * 4));
+}
+.postsFeed{
+    background-color: #0a0a0a;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    gap: 20px;
+}
+.postsFeedHeader{
+    font-size: 24px;
+    font-weight: bold;
+    margin-top: 20px;
+}

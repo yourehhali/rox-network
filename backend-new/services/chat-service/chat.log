@@ -1,0 +1,2 @@
+Chat Service running on :8085
+2025/12/18 12:12:13 Error scanning notification: sql: Scan error on column index 12, name "is_private": converting driver.Value type bool ("false") to a int: invalid syntax
