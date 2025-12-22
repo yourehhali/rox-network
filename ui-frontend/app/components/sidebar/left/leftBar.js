@@ -20,6 +20,25 @@ export default function LeftBar() {
   const navigateTo = (endpoint) => {
     router.push(endpoint);
   };
+  const handleLogout = async () => {
+    try {
+      const res = await fetch("http://localhost:8080/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (res.ok) {
+        localStorage.clear();
+        navigateTo("/");
+      } else {
+        const err = await res.text();
+        alert("Logout failed: " + err);
+      }
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
+    
+  };
 
   return (
     <aside className={styles.leftSidebar}>
@@ -30,31 +49,39 @@ export default function LeftBar() {
           </div>
 
           <div className={styles.menu}>
-            <a className={styles.menuItem} onClick={() => navigateTo('/')}>
+            <a className={styles.menuItem} onClick={() => navigateTo("/")}>
               <Home />
             </a>
 
             <a
               className={styles.menuItem}
               onClick={() =>
-                user?.id ? navigateTo(`/profile?id=${user.id}`) : navigateTo("/profile")
+                user?.id
+                  ? navigateTo(`/profile?id=${user.id}`)
+                  : navigateTo("/profile")
               }
             >
               <UserRound />
             </a>
 
-            <a className={styles.menuItem} onClick={() => navigateTo('/chat')}>
+            <a className={styles.menuItem} onClick={() => navigateTo("/chat")}>
               <MessageCircle />
             </a>
 
-            <a className={styles.menuItem} onClick={() => navigateTo('/groups')}>
+            <a
+              className={styles.menuItem}
+              onClick={() => navigateTo("/groups")}
+            >
               <UsersRound />
             </a>
           </div>
         </div>
 
         <div className={styles.bottomSection}>
-          <a className={styles.menuItem}>
+          <a className={styles.menuItem}
+            onClick={() => handleLogout()}
+          >
+            
             <LogOut />
           </a>
 

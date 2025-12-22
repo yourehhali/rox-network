@@ -1,5 +1,1 @@
 Group Service running on :8086
-DEBUG: Sending notification: {ID:0 UserID:2 SenderID:1 Type:event_created Message:New event in group: test State: CreatedAt: EventID:3 Sender:{ID:0 Username: Email: FirstName: LastName: Age:<nil> Gender:<nil> Nickname:<nil> About:<nil> Avatar:<nil> CreatedAt: UpdatedAt: IsPrivate:<nil>} ReceiverIsPrivate:false GroupTitle: GroupID:1}
-DEBUG: Notification sent successfully
-DEBUG: Sending notification: {ID:0 UserID:2 SenderID:0 Type:notification_removed Message:event_created State: CreatedAt: EventID:3 Sender:{ID:0 Username: Email: FirstName: LastName: Age:<nil> Gender:<nil> Nickname:<nil> About:<nil> Avatar:<nil> CreatedAt: UpdatedAt: IsPrivate:<nil>} ReceiverIsPrivate:false GroupTitle: GroupID:0}
-DEBUG: Notification sent successfully

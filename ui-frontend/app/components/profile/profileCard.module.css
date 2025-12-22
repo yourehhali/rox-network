@@ -1,17 +1,15 @@
 .profileCardContainer {
-    padding: 0 0 20px 0;
+    padding-block: 20px;
     color: white;
     width: 100%;
-    max-width: 900px;
     margin: 0 auto;
 }
 
 .profileCoverImage {
     width: 100%;
-    height: 250px;
+    height: 300px;
     border-radius: 20px;
     position: relative;
-    margin-bottom: 60px; /* Space for avatar overlap */
 }
 
 .coverImage {
@@ -22,20 +20,26 @@
 }
 
 .overlay {
+    display: flex;
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
+    width: 100%;
+    flex-grow: 1;
     border-radius: 20px;
     background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.8));
 }
+.overlay > div {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
 
 .profileInfo {
-    position: absolute;
-    bottom: -50px;
-    left: 40px;
     display: flex;
     align-items: flex-end;
+    padding-inline: 20px;
     gap: 20px;
-    width: calc(100% - 80px);
 }
 
 .avatar {
@@ -46,17 +50,29 @@
     border: 4px solid #121212; /* Match background */
     background: #121212;
 }
-
+.contact{
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    color: #AAA;
+    font-weight: 600;
+}
+.contactItem{
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+}
 .userInfo {
-    flex: 1;
     margin-bottom: 10px;
     display: flex;
+    flex-direction: column;
     justify-content: space-between;
-    align-items: flex-end;
+
 }
 
 .name {
-    font-size: 1.8rem;
+    font-size: 1.6rem;
     font-weight: 700;
     color: white;
     margin: 0;
@@ -65,13 +81,22 @@
 .username {
     color: #aaa;
     margin: 0;
+    font-weight: 600;
     font-size: 1rem;
+}
+
+.bottom{
+    display: flex;
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 20px 15px 20px;
 }
 
 .stats {
     display: flex;
     gap: 20px;
-    margin-top: 20px;
     padding: 0 40px;
 }
 
@@ -93,7 +118,7 @@
 }
 
 .actions {
-    margin-bottom: 15px;
+    padding-top: 10px;
 }
 
 .followButton {
@@ -117,8 +142,7 @@
 }
 
 .description {
-    padding: 0 40px;
+    font-weight: 500;
     color: #ccc;
-    line-height: 1.5;
     margin-top: 10px;
 }

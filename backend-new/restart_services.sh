@@ -38,8 +38,8 @@ echo "Started API Gateway"
 echo "Waiting for services to initialize..."
 sleep 5
 
-echo "Running Database Seeder..."
-(cd seeder && go run main.go)
+# echo "Running Database Seeder..."
+# (cd seeder && go run main.go)
 
 echo "All services started in background."
 

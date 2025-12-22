@@ -9,7 +9,7 @@ export default function Home() {
     <main className={style.main}>
       <LeftBar/>
       <Suspense>
-        <PostsFeed/>
+        <PostsFeed className={style.inner}/>
       </Suspense>
       <RightBar/>
     </main>

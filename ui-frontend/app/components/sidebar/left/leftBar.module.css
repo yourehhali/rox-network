@@ -1,8 +1,6 @@
 .leftSidebar {
     min-height: 100vh;
     min-height: 100svh;
-    width: 140px;
-    flex-shrink: 0;
     background-color: #0A0A0A;
     padding: 20px;
 }
@@ -13,11 +11,9 @@
     align-items: center;
     justify-content: space-between;
     gap: 20px;
-    width: 100px;
+    padding: 10px;
     min-height: 90svh;
-    position: fixed;
-    padding: 20px;
-    border-radius: 30px;
+    border-radius: 15px;
     background-color: #1A1A1A;
 
 }
@@ -27,7 +23,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 30px;
+    gap: 20px;
 }
 
 .plusIcon {
@@ -35,8 +31,8 @@
     background-color: #F3FFAB;
     display: flex;
     align-items: center;
-    height: 70px;
-    width: 70px;
+    height: 40px;
+    width: 40px;
     justify-content: center;
     border-radius: 50%;
     cursor: pointer;
@@ -53,13 +49,15 @@
     justify-content: center;
     background-color: #F3FFAB;
     align-items: center;
-    height: 70px;
-    width: 70px;
+    height: 50px;
+    width: 50px;
     padding: 10px;
     border-radius: 50%;
     transition: all 0.2s ease-in-out;
 }
-
+.logo img{
+    width: 30px;
+}
 .logo:hover {
     transform: rotate(20deg);
 }
@@ -68,7 +66,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     color: white;
 }
 
@@ -80,11 +78,13 @@
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    height: 54px;
-    width: 54px;
+    height: 40px;
+    width: 40px;
     transition: all 0.2s ease-in-out;
 }
-
+.menuItem svg{
+    height: 18px;
+}
 .menuItem:hover {
     color: #F3FFAB;
     scale: 1.07;

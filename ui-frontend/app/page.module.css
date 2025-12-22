@@ -1,11 +1,13 @@
 .main{
+    width: 100svw;
     display: flex;
     flex-direction: row;
-    justify-content: center;
+    justify-content: space-between;
     align-items: flex-start;
     gap: 30px;
     min-height: 100vh;
-    padding: 20px;
-    max-width: 1400px;
     margin: 0 auto;
+}
+.inner{
+    flex-grow: 1;
 }

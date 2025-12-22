@@ -1,2 +1,26 @@
 User Service connected to database at ../../database/forum.db
 User Service running on :8082
+DEBUG: SetFollowers handler called
+DEBUG: User 4 toggling follow for 1
+DEBUG: Sending notification: {ID:0 UserID:1 SenderID:4 Type:new_follower Message:started following you State: CreatedAt: EventID:0 Sender:{ID:0 Username: Email: FirstName: LastName: Age:<nil> Gender:<nil> Nickname:<nil> About:<nil> Avatar:<nil> CreatedAt: UpdatedAt: IsPrivate:<nil>} ReceiverIsPrivate:false GroupTitle: GroupID:0}
+DEBUG: Notification sent successfully
+DEBUG: SetFollowers handler called
+DEBUG: User 4 toggling follow for 1
+DEBUG: Sending notification: {ID:0 UserID:1 SenderID:4 Type:notification_removed Message:started following you State: CreatedAt: EventID:0 Sender:{ID:0 Username: Email: FirstName: LastName: Age:<nil> Gender:<nil> Nickname:<nil> About:<nil> Avatar:<nil> CreatedAt: UpdatedAt: IsPrivate:<nil>} ReceiverIsPrivate:false GroupTitle: GroupID:0}
+DEBUG: Notification sent successfully
+DEBUG: SetFollowers handler called
+DEBUG: User 4 toggling follow for 1
+DEBUG: Sending notification: {ID:0 UserID:1 SenderID:4 Type:new_follower Message:started following you State: CreatedAt: EventID:0 Sender:{ID:0 Username: Email: FirstName: LastName: Age:<nil> Gender:<nil> Nickname:<nil> About:<nil> Avatar:<nil> CreatedAt: UpdatedAt: IsPrivate:<nil>} ReceiverIsPrivate:false GroupTitle: GroupID:0}
+DEBUG: Notification sent successfully
+DEBUG: SetFollowers handler called
+DEBUG: User 4 toggling follow for 1
+DEBUG: Sending notification: {ID:0 UserID:1 SenderID:4 Type:notification_removed Message:started following you State: CreatedAt: EventID:0 Sender:{ID:0 Username: Email: FirstName: LastName: Age:<nil> Gender:<nil> Nickname:<nil> About:<nil> Avatar:<nil> CreatedAt: UpdatedAt: IsPrivate:<nil>} ReceiverIsPrivate:false GroupTitle: GroupID:0}
+DEBUG: Notification sent successfully
+DEBUG: SetFollowers handler called
+DEBUG: User 4 toggling follow for 1
+DEBUG: Sending notification: {ID:0 UserID:1 SenderID:4 Type:new_follower Message:started following you State: CreatedAt: EventID:0 Sender:{ID:0 Username: Email: FirstName: LastName: Age:<nil> Gender:<nil> Nickname:<nil> About:<nil> Avatar:<nil> CreatedAt: UpdatedAt: IsPrivate:<nil>} ReceiverIsPrivate:false GroupTitle: GroupID:0}
+DEBUG: Notification sent successfully
+DEBUG: SetFollowers handler called
+DEBUG: User 4 toggling follow for 1
+DEBUG: Sending notification: {ID:0 UserID:1 SenderID:4 Type:notification_removed Message:started following you State: CreatedAt: EventID:0 Sender:{ID:0 Username: Email: FirstName: LastName: Age:<nil> Gender:<nil> Nickname:<nil> About:<nil> Avatar:<nil> CreatedAt: UpdatedAt: IsPrivate:<nil>} ReceiverIsPrivate:false GroupTitle: GroupID:0}
+DEBUG: Notification sent successfully

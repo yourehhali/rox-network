@@ -1,8 +1,12 @@
 Chat Service running on :8085
-2025/12/20 06:43:00 User 1 connected to Chat
-2025/12/20 06:43:01 User 1 connected to Chat
-2025/12/20 06:43:53 DEBUG: Chat Service Received Notification: {ID:0 UserID:2 SenderID:1 Type:event_created Message:New event in group: test State: CreatedAt: EventID:3 Sender:{ID:0 Username: Email: FirstName: LastName: Age:<nil> Gender:<nil> Nickname:<nil> About:<nil> Avatar:<nil> CreatedAt: UpdatedAt: IsPrivate:<nil>} ReceiverIsPrivate:false GroupTitle: GroupID:1}
-2025/12/20 06:44:03 User 1 connected to Notifications
-2025/12/20 06:44:26 User 2 connected to Notifications
-2025/12/20 06:44:31 DEBUG: Chat Service Received Notification: {ID:0 UserID:2 SenderID:0 Type:notification_removed Message:event_created State: CreatedAt: EventID:3 Sender:{ID:0 Username: Email: FirstName: LastName: Age:<nil> Gender:<nil> Nickname:<nil> About:<nil> Avatar:<nil> CreatedAt: UpdatedAt: IsPrivate:<nil>} ReceiverIsPrivate:false GroupTitle: GroupID:0}
-2025/12/20 06:45:02 User 2 connected to Chat
+2025/12/22 19:46:05 DEBUG: Chat Service Received Notification: {ID:0 UserID:1 SenderID:4 Type:new_follower Message:started following you State: CreatedAt: EventID:0 Sender:{ID:0 Username: Email: FirstName: LastName: Age:<nil> Gender:<nil> Nickname:<nil> About:<nil> Avatar:<nil> CreatedAt: UpdatedAt: IsPrivate:<nil>} ReceiverIsPrivate:false GroupTitle: GroupID:0}
+2025/12/22 19:46:06 DEBUG: Chat Service Received Notification: {ID:0 UserID:1 SenderID:4 Type:notification_removed Message:started following you State: CreatedAt: EventID:0 Sender:{ID:0 Username: Email: FirstName: LastName: Age:<nil> Gender:<nil> Nickname:<nil> About:<nil> Avatar:<nil> CreatedAt: UpdatedAt: IsPrivate:<nil>} ReceiverIsPrivate:false GroupTitle: GroupID:0}
+2025/12/22 19:46:08 DEBUG: Chat Service Received Notification: {ID:0 UserID:1 SenderID:4 Type:new_follower Message:started following you State: CreatedAt: EventID:0 Sender:{ID:0 Username: Email: FirstName: LastName: Age:<nil> Gender:<nil> Nickname:<nil> About:<nil> Avatar:<nil> CreatedAt: UpdatedAt: IsPrivate:<nil>} ReceiverIsPrivate:false GroupTitle: GroupID:0}
+2025/12/22 19:46:08 DEBUG: Chat Service Received Notification: {ID:0 UserID:1 SenderID:4 Type:notification_removed Message:started following you State: CreatedAt: EventID:0 Sender:{ID:0 Username: Email: FirstName: LastName: Age:<nil> Gender:<nil> Nickname:<nil> About:<nil> Avatar:<nil> CreatedAt: UpdatedAt: IsPrivate:<nil>} ReceiverIsPrivate:false GroupTitle: GroupID:0}
+2025/12/22 19:46:10 DEBUG: Chat Service Received Notification: {ID:0 UserID:1 SenderID:4 Type:new_follower Message:started following you State: CreatedAt: EventID:0 Sender:{ID:0 Username: Email: FirstName: LastName: Age:<nil> Gender:<nil> Nickname:<nil> About:<nil> Avatar:<nil> CreatedAt: UpdatedAt: IsPrivate:<nil>} ReceiverIsPrivate:false GroupTitle: GroupID:0}
+2025/12/22 19:46:11 DEBUG: Chat Service Received Notification: {ID:0 UserID:1 SenderID:4 Type:notification_removed Message:started following you State: CreatedAt: EventID:0 Sender:{ID:0 Username: Email: FirstName: LastName: Age:<nil> Gender:<nil> Nickname:<nil> About:<nil> Avatar:<nil> CreatedAt: UpdatedAt: IsPrivate:<nil>} ReceiverIsPrivate:false GroupTitle: GroupID:0}
+2025/12/22 21:01:11 User 4 connected to Chat
+2025/12/22 21:02:32 User 4 connected to Notifications
+2025/12/22 21:18:40 User 4 connected to Notifications
+2025/12/22 21:18:47 User 4 connected to Chat
+2025/12/22 21:18:57 User 4 connected to Chat
