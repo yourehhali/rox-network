@@ -1,193 +1,224 @@
-.container {
-  display: flex;
-  min-height: 100vh;
-  gap: 20px;
+.main {
+    width: 100svw;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 30px;
+    min-height: 100vh;
+    margin: 0 auto;
+}
+
+.middle {
+    flex-grow: 1;
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+    height: 100vh;
 }
 
 .sidebar {
-  width: 280px;
-  background-color: #1A1A1A;
-  border-radius: 20px;
-  padding: 20px;
-  color: white;
-  display: flex;
-  flex-direction: column;
-  height: calc(100vh - 40px);
-  position: sticky;
-  top: 20px;
+    width: 300px;
+    background-color: #1A1A1A;
+    border-radius: 20px;
+    padding: 20px;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
 .sidebar h3 {
-  margin-bottom: 20px;
-  color: #F3FFAB;
-  font-size: 1.2rem;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #333;
+    margin-bottom: 20px;
+    color: #F3FFAB;
+    font-size: 1.2rem;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #333;
 }
 
 .list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  overflow-y: auto;
-  flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.list::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 3px;
 }
 
 .user {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background-color: #232323;
-  padding: 12px;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: 1px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background-color: transparent;
+    padding: 12px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
 }
 
 .user:hover {
-  background-color: #2f2f2f;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    background-color: #2f2f2f;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 .active {
-  border-color: #F3FFAB;
-  background-color: rgba(243, 255, 171, 0.1);
+    border-color: #F3FFAB;
+    background-color: rgba(243, 255, 171, 0.1);
 }
 
 .user img {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid #333;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #333;
 }
 
 .chatArea {
-  flex: 1;
-  background-color: #1A1A1A;
-  border-radius: 20px;
-  padding: 24px;
-  color: white;
-  display: flex;
-  flex-direction: column;
-  height: calc(100vh - 40px);
-  position: sticky;
-  top: 20px;
+    flex: 1;
+    background-color: #1A1A1A;
+    border-radius: 20px;
+    padding: 24px;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
 }
 
 .header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #333;
-  margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #333;
+    margin-bottom: 20px;
 }
 
 .header img {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid #F3FFAB;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #F3FFAB;
 }
 
 .header span {
-  font-size: 1.2rem;
-  font-weight: bold;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #F3FFAB;
 }
 
 .messages {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 10px;
-  margin-right: -10px;
-  padding-right: 10px;
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 10px;
+    margin-right: -10px;
+    padding-right: 10px;
 }
 
 .messages::-webkit-scrollbar {
-  width: 6px;
+    width: 6px;
 }
 
 .messages::-webkit-scrollbar-thumb {
-  background: #333;
-  border-radius: 3px;
+    background: #333;
+    border-radius: 3px;
 }
 
 .message {
-  background: #252525;
-  padding: 12px 16px;
-  border-radius: 16px;
-  max-width: 70%;
-  align-self: flex-start;
-  border: 1px solid #333;
+    background: #252525;
+    padding: 12px 16px;
+    border-radius: 16px;
+    max-width: 70%;
+    align-self: flex-start;
+    border: 1px solid #333;
+    position: relative;
 }
 
 .message.own {
-  align-self: flex-end;
-  background: rgba(243, 255, 171, 0.1);
-  border-color: rgba(243, 255, 171, 0.3);
+    align-self: flex-end;
+    background: #F3FFAB;
+    border-color: #F3FFAB;
+    color: black;
+}
+
+.message.own .sender {
+    color: rgba(0, 0, 0, 0.7);
+}
+
+.message p {
+    margin: 0;
+    line-height: 1.5;
 }
 
 .sender {
-  font-weight: bold;
-  color: #F3FFAB;
-  font-size: 0.85rem;
-  margin-bottom: 6px;
-  display: block;
+    font-weight: bold;
+    color: #F3FFAB;
+    font-size: 0.85rem;
+    margin-bottom: 6px;
+    display: block;
 }
 
 .inputRow {
-  display: flex;
-  gap: 12px;
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid #333;
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #333;
 }
 
 .inputRow input {
-  flex: 1;
-  padding: 16px;
-  border-radius: 24px;
-  border: 1px solid #333;
-  background: #252525;
-  color: white;
-  outline: none;
-  transition: border-color 0.2s;
-  font-size: 1rem;
+    flex: 1;
+    padding: 16px;
+    border-radius: 24px;
+    border: 1px solid #333;
+    background: #252525;
+    color: white;
+    outline: none;
+    transition: border-color 0.2s;
+    font-size: 1rem;
 }
 
 .inputRow input:focus {
-  border-color: #F3FFAB;
+    border-color: #F3FFAB;
 }
 
 .inputRow button {
-  padding: 0 32px;
-  border-radius: 24px;
-  border: none;
-  background: #F3FFAB;
-  color: black;
-  font-weight: bold;
-  cursor: pointer;
-  transition: opacity 0.2s, transform 0.1s;
-  font-size: 1rem;
+    padding: 0 32px;
+    border-radius: 24px;
+    border: none;
+    background: #F3FFAB;
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    font-size: 1rem;
 }
 
 .inputRow button:hover {
-  opacity: 0.9;
-  transform: scale(1.02);
+    opacity: 0.9;
+    transform: scale(1.02);
 }
 
 .placeholder {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: #666;
-  font-size: 1.2rem;
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #666;
+    font-size: 1.2rem;
 }

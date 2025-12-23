@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"social-network/pkg/database"
 	"social-network/pkg/models"
-	sharedRepo "social-network/pkg/repository"
 )
 
 // Queries
@@ -150,20 +149,23 @@ func AddComment(userID, postID int, content, imagePath string) (int, error) {
 
 func GetCommentByID(id int) (map[string]interface{}, error) {
 	var commentID, uid, pid int
-	var commentText, createdAt string
-	var imagePath sql.NullString
+	var commentText, createdAt, username string
+	var imagePath, avatar sql.NullString
 	err := database.DB.QueryRow(
-		`SELECT id, user_id, post_id, content, created_at, image_url FROM comments WHERE id = ?`, id,
-	).Scan(&commentID, &uid, &pid, &commentText, &createdAt, &imagePath)
+		`SELECT c.id, c.user_id, c.post_id, c.content, c.created_at, c.image_url, u.username, u.avatar 
+		 FROM comments c 
+		 JOIN users u ON c.user_id = u.id 
+		 WHERE c.id = ?`, id,
+	).Scan(&commentID, &uid, &pid, &commentText, &createdAt, &imagePath, &username, &avatar)
 	if err != nil {
 		return nil, err
 	}
 
-	username, _ := sharedRepo.GetUsernameByID(uid)
-
 	return map[string]interface{}{
 		"id":         commentID,
 		"user_id":    username, // Legacy behavior: return username in user_id field
+		"username":   username,
+		"avatar":     avatar.String,
 		"post_id":    pid,
 		"text":       commentText,
 		"image_path": imagePath.String,
@@ -173,7 +175,11 @@ func GetCommentByID(id int) (map[string]interface{}, error) {
 
 func GetCommentsByPostID(postID int) ([]map[string]interface{}, error) {
 	rows, err := database.DB.Query(
-		`SELECT id, user_id, post_id, content, created_at, image_url FROM comments WHERE post_id = ? ORDER BY created_at ASC`, postID,
+		`SELECT c.id, c.user_id, c.post_id, c.content, c.created_at, c.image_url, u.username, u.avatar 
+		 FROM comments c 
+		 JOIN users u ON c.user_id = u.id 
+		 WHERE c.post_id = ? 
+		 ORDER BY c.created_at ASC`, postID,
 	)
 	if err != nil {
 		return nil, err
@@ -183,15 +189,16 @@ func GetCommentsByPostID(postID int) ([]map[string]interface{}, error) {
 	var comments []map[string]interface{}
 	for rows.Next() {
 		var id, uid, pid int
-		var text, createdAt string
-		var imagePath sql.NullString
-		if err := rows.Scan(&id, &uid, &pid, &text, &createdAt, &imagePath); err != nil {
+		var text, createdAt, username string
+		var imagePath, avatar sql.NullString
+		if err := rows.Scan(&id, &uid, &pid, &text, &createdAt, &imagePath, &username, &avatar); err != nil {
 			return nil, err
 		}
-		username, _ := sharedRepo.GetUsernameByID(uid)
 		comments = append(comments, map[string]interface{}{
 			"id":         id,
 			"user_id":    username, // Legacy behavior
+			"username":   username,
+			"avatar":     avatar.String,
 			"post_id":    pid,
 			"text":       text,
 			"image_path": imagePath.String,

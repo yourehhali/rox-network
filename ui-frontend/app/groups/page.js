@@ -27,9 +27,9 @@ export default function GroupsPage() {
   }, []);
 
   return (
-    <div className={styles.container}>
+    <main className={styles.main}>
       <LeftBar />
-      <main className={styles.main}>
+      <div className={styles.middle}>
         <div className={styles.header}>
           <h1>Groups</h1>
           <CreateGroupModal onSuccess={loadGroups} />
@@ -50,8 +50,8 @@ export default function GroupsPage() {
             ))}
           </div>
         )}
-      </main>
+      </div>
       <RightBar />
-    </div>
+    </main>
   );
 }

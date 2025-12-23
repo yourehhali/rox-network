@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="post.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <title>post</title>
+</head>
+
+<body>
+    <div class="postContainer">
+        <div class="post-modal">
+            <button class="close-btn">
+                <i data-lucide="x"></i>
+            </button>
+
+            <div class="post">
+                <div class="post-bg-container">
+                    <img class="post-bg" src="post2.png" alt="">
+                </div>
+
+                <div class="post-header">
+                    <img class="avatar" src="avatar.png" alt="">
+                    <div class="info">
+                        <div class="name">Said oubaiss</div>
+                        <div class="time">3d ago</div>
+                    </div>
+                </div>
+
+
+                <div class="bottom">
+                    <div class="post-content">
+                        What's on your mind
+                    </div>
+                    <div class="post-footer">
+                        <button class="icon-btn">
+                            <i data-lucide="heart"></i>
+                            <span>12</span>
+                        </button>
+                        <button class="icon-btn">
+                            <i data-lucide="thumbs-down"></i>
+                            <span>0</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="addComment">
+            <form action="">
+                <div class="commentBoxContainer">
+                    <textarea name="comment" id="comment" placeholder="Write a comment ..."></textarea>
+                    <input type="submit" value="Add Comment">
+                </div>
+            </form>
+        </div>
+        <div class="comment">
+            <div class="comment-header">
+                <img class="avatar" src="avatar.png" alt="">
+                <div class="info">
+                    <div class="name">Said oubaiss</div>
+                    <div class="time">3d ago</div>
+                </div>
+            </div>
+
+
+            <div class="bottom">
+                <div class="comment-content">
+                    What's on your mind
+                </div>
+            </div>
+        </div>
+        <div class="comment">
+            <div class="comment-header">
+                <img class="avatar" src="avatar.png" alt="">
+                <div class="info">
+                    <div class="name">Said oubaiss</div>
+                    <div class="time">3d ago</div>
+                </div>
+            </div>
+
+
+            <div class="bottom">
+                <div class="comment-content">
+                    What's on your mind
+                </div>
+            </div>
+        </div>
+        <div class="comment">
+            <div class="comment-header">
+                <img class="avatar" src="avatar.png" alt="">
+                <div class="info">
+                    <div class="name">Said oubaiss</div>
+                    <div class="time">3d ago</div>
+                </div>
+            </div>
+
+
+            <div class="bottom">
+                <div class="comment-content">
+                    What's on your mind
+                </div>
+            </div>
+        </div>
+        <div class="comment">
+            <div class="comment-header">
+                <img class="avatar" src="avatar.png" alt="">
+                <div class="info">
+                    <div class="name">Said oubaiss</div>
+                    <div class="time">3d ago</div>
+                </div>
+            </div>
+
+
+            <div class="bottom">
+                <div class="comment-content">
+                    What's on your mind
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <script>
+        lucide.createIcons();
+
+        const bgContainer = document.querySelector(".post-bg-container");
+        const bgImg = document.querySelector(".post-bg");
+
+        const gradients = ["bg-1", "bg-2", "bg-3", "bg-4", "bg-5"];
+
+        // If the image is missing or empty → use a gradient background
+        if (!bgImg.getAttribute("src") || bgImg.getAttribute("src").trim() === "") {
+            bgImg.remove();  // Remove broken/empty image tag
+            const randomBg = gradients[Math.floor(Math.random() * gradients.length)];
+            bgContainer.classList.add(randomBg);
+        }
+    </script>
+
+
+</body>
+
+</html>

@@ -1,10 +1,10 @@
 .FriendsSuggestions{
     display: flex;
     flex-direction: column;
-    padding: 30px;
+    padding: 20px;
     background-color: #1A1A1A;
-    border-radius: 30px;
-    gap: 20px;
+    border-radius: 20px;
+    gap: 16px;
     width: 100%;
 }
 .left{
@@ -19,12 +19,13 @@
 .profileButton{
     background-color: #F3FFAB30;
     border: none;
-    border-radius: 20px;
-    padding: 8px 16px;
+    border-radius: 16px;
+    padding: 6px 12px;
     color: #F3FFAB;
     font-weight: bold;
     cursor: pointer;
     transition: background-color 0.3s ease;
+    font-size: 0.9rem;
 }
 .profileButton:hover{
     background-color: #F3FFAB;
@@ -33,7 +34,7 @@
 .container{
     display: flex;
     flex-direction: row;
-    gap: 20px;
+    gap: 16px;
     width: 100%;
     align-items: center;
     justify-content: space-between;
@@ -44,11 +45,11 @@
     flex-direction: column;
     align-items: center;
     width: 100%;
-    gap: 20px;
+    gap: 16px;
 }
 .left img{
-    width: 60px;
-    height: 60px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     object-fit: cover;
 }

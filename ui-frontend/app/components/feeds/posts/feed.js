@@ -1,6 +1,7 @@
 "use client";
 import style from "./feed.module.css";
 import PostCard from "../../post/card/card";
+import OpenPost from "../../post/open/openPost";
 import { useState, useEffect } from 'react';
 import { useSearchParams } from "next/navigation";
 import { apiFetch, toMediaUrl } from '../../../../lib/api';
@@ -8,6 +9,7 @@ import { apiFetch, toMediaUrl } from '../../../../lib/api';
 export default function PostsFeed({ userId: propUserId }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedPost, setSelectedPost] = useState(null);
   const params = useSearchParams();
 
   useEffect(() => {
@@ -29,6 +31,9 @@ export default function PostsFeed({ userId: propUserId }) {
               content: post.content,
               imageUrl,
               ago: new Date(post.created_at).toLocaleDateString(),
+              likesCount: post.likes_count || 0,
+              dislikeCount: post.dislikes_count || 0,
+              userReaction: post.userReaction,
             };
           });
           setPosts(mappedPosts);
@@ -47,13 +52,31 @@ export default function PostsFeed({ userId: propUserId }) {
     return <div className={style.postsFeed}>Loading...</div>;
   }
 
+  const handleOpenPost = (post) => {
+    setSelectedPost(post);
+  };
+
+  const handleClosePost = () => {
+    setSelectedPost(null);
+  };
+
   const buildPosts = posts.map((postData) => (
-    <PostCard key={postData.id} postData={postData} />
+    <PostCard 
+      key={postData.id} 
+      postData={postData} 
+      onOpen={() => handleOpenPost(postData)}
+    />
   ));
   
   return (
     <div className={style.postsFeed}>
       <div className={style.postsFeedContainer}>{buildPosts}</div>
+      {selectedPost && (
+        <OpenPost 
+          postData={selectedPost} 
+          onClose={handleClosePost} 
+        />
+      )}
     </div>
   );
 }

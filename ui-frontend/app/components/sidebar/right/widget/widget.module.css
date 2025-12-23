@@ -2,10 +2,11 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 20px;
-    padding: 12px;
+    gap: 12px;
+    padding: 10px;
     background-color: #1A1A1A;
-    border-radius: 30px;
+    border-radius: 20px;
+    position: relative; /* Added for relative positioning of notifications panel */
 }
 .notifications{
     color: white;
@@ -14,13 +15,13 @@
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    height: 54px;
-    width: 54px;
+    height: 40px;
+    width: 40px;
     transition: all 0.2s ease-in-out;
 }
 .userAvatar,.avatarImage{
-    width: 54px;
-    height: 54px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     object-fit: cover;
 }
@@ -36,8 +37,8 @@
     position: absolute;
     bottom: 0;
     right: 0;
-    width: 16px;
-    height: 16px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
     background-color: #F3FFAB;
     border: 2px solid #1A1A1A;
@@ -49,8 +50,8 @@
 }
 .notificationsPanel{
     position: absolute;
-    right: 16px;
-    top: 80px;
+    right: 0;
+    top: 60px; /* Adjusted top position */
     width: 300px;
     max-height: 400px;
     overflow-y: auto;
@@ -61,7 +62,8 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    z-index: 10;
+    z-index: 100; /* Increased z-index */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5); /* Added shadow */
 }
 .notificationItem{
     background-color: #232323;

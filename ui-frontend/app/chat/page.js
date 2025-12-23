@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { apiFetch, toMediaUrl } from "../../lib/api";
 import LeftBar from "../components/sidebar/left/leftBar.js";
+import RightBar from "../components/sidebar/right/rightBar.js";
 import style from "./chat.module.css";
 
 export default function ChatPage() {
@@ -71,43 +72,46 @@ export default function ChatPage() {
   };
 
   return (
-    <div className={style.container}>
+    <main className={style.main}>
       <LeftBar />
-      <aside className={style.sidebar}>
-        <h3>Chats</h3>
-        <div className={style.list}>
-          {friends.map((f) => (
-            <div key={f.id} className={`${style.user} ${activeUser?.id === f.id ? style.active : ''}`} onClick={() => openChat(f)}>
-              <img src={f.avatar} alt={f.name} />
-              <span>{f.name}</span>
-            </div>
-          ))}
+      <div className={style.middle}>
+        <aside className={style.sidebar}>
+          <h3>Chats</h3>
+          <div className={style.list}>
+            {friends.map((f) => (
+              <div key={f.id} className={`${style.user} ${activeUser?.id === f.id ? style.active : ''}`} onClick={() => openChat(f)}>
+                <img src={f.avatar} alt={f.name} />
+                <span>{f.name}</span>
+              </div>
+            ))}
+          </div>
+        </aside>
+        <div className={style.chatArea}>
+          {activeUser ? (
+            <>
+              <header className={style.header}>
+                <img src={activeUser.avatar} alt={activeUser.name} />
+                <span>{activeUser.name}</span>
+              </header>
+              <div className={style.messages}>
+                {messages.map((m, i) => (
+                  <div key={m.id || i} className={`${style.message} ${m.sender_id === user?.id ? style.own : ''}`}>
+                    <span className={style.sender}>{m.sender?.username || (m.sender_id === user?.id ? 'You' : m.sender_id)}</span>
+                    <p>{m.content}</p>
+                  </div>
+                ))}
+              </div>
+              <div className={style.inputRow}>
+                <input value={input} onChange={(e)=>setInput(e.target.value)} placeholder="Type a message..." />
+                <button onClick={sendMessage}>Send</button>
+              </div>
+            </>
+          ) : (
+            <div className={style.placeholder}>Select a chat to start messaging</div>
+          )}
         </div>
-      </aside>
-      <main className={style.chatArea}>
-        {activeUser ? (
-          <>
-            <header className={style.header}>
-              <img src={activeUser.avatar} alt={activeUser.name} />
-              <span>{activeUser.name}</span>
-            </header>
-            <div className={style.messages}>
-              {messages.map((m, i) => (
-                <div key={m.id || i} className={`${style.message} ${m.sender_id === user?.id ? style.own : ''}`}>
-                  <span className={style.sender}>{m.sender?.username || (m.sender_id === user?.id ? 'You' : m.sender_id)}</span>
-                  <p>{m.content}</p>
-                </div>
-              ))}
-            </div>
-            <div className={style.inputRow}>
-              <input value={input} onChange={(e)=>setInput(e.target.value)} placeholder="Type a message..." />
-              <button onClick={sendMessage}>Send</button>
-            </div>
-          </>
-        ) : (
-          <div className={style.placeholder}>Select a chat</div>
-        )}
-      </main>
-    </div>
+      </div>
+      <RightBar />
+    </main>
   );
 }

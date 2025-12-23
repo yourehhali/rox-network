@@ -3,6 +3,8 @@
 import styles from "./leftBar.module.css";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../../../context/AuthContext";
+import { useState } from "react";
+import CreatePostModal from "../../post/create/CreatePostModal";
 
 import {
   Plus,
@@ -16,6 +18,7 @@ import {
 export default function LeftBar() {
   const router = useRouter();
   const { user } = useAuth();
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const navigateTo = (endpoint) => {
     router.push(endpoint);
@@ -85,13 +88,26 @@ export default function LeftBar() {
             <LogOut />
           </a>
 
-          <div className={styles.createButton}>
+          <div className={styles.createButton} onClick={() => setShowCreateModal(true)}>
             <span className={styles.plusIcon}>
               <Plus />
             </span>
           </div>
         </div>
       </div>
+      {showCreateModal && (
+        <CreatePostModal
+          onClose={() => setShowCreateModal(false)}
+          onSuccess={() => {
+            setShowCreateModal(false);
+            if (window.location.pathname === "/") {
+              window.location.reload();
+            } else {
+              navigateTo("/");
+            }
+          }}
+        />
+      )}
     </aside>
   );
 }

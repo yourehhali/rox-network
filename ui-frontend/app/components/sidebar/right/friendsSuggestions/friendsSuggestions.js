@@ -41,22 +41,6 @@ export default function FriendsSuggestions() {
     router.push(endpoint);
   };
 
-  const handleFollow = async (userId) => {
-    try {
-      const res = await apiFetch("/toggle-follow", {
-        method: "POST",
-        body: JSON.stringify({ followed_id: userId }),
-      });
-      if (!res.ok) {
-        return;
-      }
-      // Optionally refresh suggestions to remove followed user
-      setSuggestions((prev) => prev.filter((u) => u.id !== userId));
-    } catch (e) {
-      // swallow errors for now
-    }
-  };
-
   if (loading) {
     return (
       <div className={style.FriendsSuggestions}>
@@ -88,12 +72,6 @@ export default function FriendsSuggestions() {
             onClick={() => navigateTo(`/profile?id=${user.id}`)}
           >
             Profile
-          </button>
-          <button
-            className={style.followButton}
-            onClick={() => handleFollow(user.id)}
-          >
-            Follow
           </button>
         </div>
       </div>

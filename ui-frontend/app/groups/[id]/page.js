@@ -124,9 +124,9 @@ export default function GroupPage() {
   };
 
   return (
-    <div className={styles.container}>
+    <main className={styles.main}>
       <LeftBar />
-      <main className={styles.main}>
+      <div className={styles.middle}>
         {loading ? (
           <h2>Loading...</h2>
         ) : (
@@ -240,7 +240,7 @@ export default function GroupPage() {
             </div>
           </>
         )}
-      </main>
+      </div>
       
       {showEventModal && (
         <CreateEventModal 
@@ -255,6 +255,6 @@ export default function GroupPage() {
       )}
       
       <RightBar />
-    </div>
+    </main>
   );
 }

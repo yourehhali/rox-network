@@ -4,7 +4,7 @@ import { Eye } from "lucide-react";
 
 const grads = ["bg-1", "bg-2", "bg-3", "bg-4", "bg-5"];
 
-export default function PostCard({postData}) {
+export default function PostCard({postData, onOpen}) {
 
   const rndGrad = grads[Math.floor(Math.random() * grads.length)];
   return (
@@ -42,7 +42,7 @@ export default function PostCard({postData}) {
               <div className={style.postAgo}>{postData.ago}</div>
             </div>
           </div>
-          <div className={style.OpenPost}>
+          <div className={style.OpenPost} onClick={onOpen}>
             <Eye className={style.eyeIcon} />
           </div>
         </div>

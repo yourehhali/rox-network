@@ -1,12 +1,1 @@
 Chat Service running on :8085
-2025/12/22 19:46:05 DEBUG: Chat Service Received Notification: {ID:0 UserID:1 SenderID:4 Type:new_follower Message:started following you State: CreatedAt: EventID:0 Sender:{ID:0 Username: Email: FirstName: LastName: Age:<nil> Gender:<nil> Nickname:<nil> About:<nil> Avatar:<nil> CreatedAt: UpdatedAt: IsPrivate:<nil>} ReceiverIsPrivate:false GroupTitle: GroupID:0}
-2025/12/22 19:46:06 DEBUG: Chat Service Received Notification: {ID:0 UserID:1 SenderID:4 Type:notification_removed Message:started following you State: CreatedAt: EventID:0 Sender:{ID:0 Username: Email: FirstName: LastName: Age:<nil> Gender:<nil> Nickname:<nil> About:<nil> Avatar:<nil> CreatedAt: UpdatedAt: IsPrivate:<nil>} ReceiverIsPrivate:false GroupTitle: GroupID:0}
-2025/12/22 19:46:08 DEBUG: Chat Service Received Notification: {ID:0 UserID:1 SenderID:4 Type:new_follower Message:started following you State: CreatedAt: EventID:0 Sender:{ID:0 Username: Email: FirstName: LastName: Age:<nil> Gender:<nil> Nickname:<nil> About:<nil> Avatar:<nil> CreatedAt: UpdatedAt: IsPrivate:<nil>} ReceiverIsPrivate:false GroupTitle: GroupID:0}
-2025/12/22 19:46:08 DEBUG: Chat Service Received Notification: {ID:0 UserID:1 SenderID:4 Type:notification_removed Message:started following you State: CreatedAt: EventID:0 Sender:{ID:0 Username: Email: FirstName: LastName: Age:<nil> Gender:<nil> Nickname:<nil> About:<nil> Avatar:<nil> CreatedAt: UpdatedAt: IsPrivate:<nil>} ReceiverIsPrivate:false GroupTitle: GroupID:0}
-2025/12/22 19:46:10 DEBUG: Chat Service Received Notification: {ID:0 UserID:1 SenderID:4 Type:new_follower Message:started following you State: CreatedAt: EventID:0 Sender:{ID:0 Username: Email: FirstName: LastName: Age:<nil> Gender:<nil> Nickname:<nil> About:<nil> Avatar:<nil> CreatedAt: UpdatedAt: IsPrivate:<nil>} ReceiverIsPrivate:false GroupTitle: GroupID:0}
-2025/12/22 19:46:11 DEBUG: Chat Service Received Notification: {ID:0 UserID:1 SenderID:4 Type:notification_removed Message:started following you State: CreatedAt: EventID:0 Sender:{ID:0 Username: Email: FirstName: LastName: Age:<nil> Gender:<nil> Nickname:<nil> About:<nil> Avatar:<nil> CreatedAt: UpdatedAt: IsPrivate:<nil>} ReceiverIsPrivate:false GroupTitle: GroupID:0}
-2025/12/22 21:01:11 User 4 connected to Chat
-2025/12/22 21:02:32 User 4 connected to Notifications
-2025/12/22 21:18:40 User 4 connected to Notifications
-2025/12/22 21:18:47 User 4 connected to Chat
-2025/12/22 21:18:57 User 4 connected to Chat
