@@ -9,7 +9,10 @@ import (
 
 func main() {
 	// Ensure uploads directory exists
-	uploadDir := "../../uploads"
+	uploadDir := os.Getenv("UPLOAD_DIR")
+	if uploadDir == "" {
+		uploadDir = "../../uploads"
+	}
 	if err := os.MkdirAll(uploadDir, 0755); err != nil {
 		log.Printf("Warning: could not create uploads dir: %v", err)
 	}

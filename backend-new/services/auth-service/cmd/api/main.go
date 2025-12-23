@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"social-network/pkg/database"
 	"social-network/pkg/middleware"
 )
@@ -14,7 +15,10 @@ func main() {
 	// Assuming running from root of backend-new or services/auth-service
 	// We'll use absolute path or relative to root if running via `go run`
 	// Ideally pass via ENV var.
-	dbPath := "../../database/forum.db" 
+	dbPath := os.Getenv("DB_PATH")
+	if dbPath == "" {
+		dbPath = "../../database/forum.db"
+	}
 	database.InitDB(dbPath)
 	fmt.Println("Auth Service connected to database at", dbPath)
 

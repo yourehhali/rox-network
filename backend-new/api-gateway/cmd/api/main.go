@@ -6,16 +6,24 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"strings"
 )
 
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
+}
+
 func main() {
-	authURL, _ := url.Parse("http://localhost:8081")
-	userURL, _ := url.Parse("http://localhost:8082")
-	postURL, _ := url.Parse("http://localhost:8083")
-	mediaURL, _ := url.Parse("http://localhost:8084")
-	chatURL, _ := url.Parse("http://localhost:8085")
-	groupURL, _ := url.Parse("http://localhost:8086")
+	authURL, _ := url.Parse(getEnv("AUTH_SERVICE_URL", "http://localhost:8081"))
+	userURL, _ := url.Parse(getEnv("USER_SERVICE_URL", "http://localhost:8082"))
+	postURL, _ := url.Parse(getEnv("POST_SERVICE_URL", "http://localhost:8083"))
+	mediaURL, _ := url.Parse(getEnv("MEDIA_SERVICE_URL", "http://localhost:8084"))
+	chatURL, _ := url.Parse(getEnv("CHAT_SERVICE_URL", "http://localhost:8085"))
+	groupURL, _ := url.Parse(getEnv("GROUP_SERVICE_URL", "http://localhost:8086"))
 
 	newProxy := func(target *url.URL) *httputil.ReverseProxy {
 		proxy := httputil.NewSingleHostReverseProxy(target)

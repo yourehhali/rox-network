@@ -1,0 +1,109 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: ./ui-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+    depends_on:
+      - api-gateway
+
+  api-gateway:
+    build:
+      context: ./backend-new
+      args:
+        SERVICE_NAME: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - AUTH_SERVICE_URL=http://auth-service:8081
+      - USER_SERVICE_URL=http://user-service:8082
+      - POST_SERVICE_URL=http://post-service:8083
+      - MEDIA_SERVICE_URL=http://media-service:8084
+      - CHAT_SERVICE_URL=http://chat-service:8085
+      - GROUP_SERVICE_URL=http://group-service:8086
+    depends_on:
+      - auth-service
+      - user-service
+      - post-service
+      - media-service
+      - chat-service
+      - group-service
+
+  auth-service:
+    build:
+      context: ./backend-new
+      args:
+        SERVICE_NAME: auth-service
+    ports:
+      - "8081:8081"
+    environment:
+      - DB_PATH=/app/database/forum.db
+    volumes:
+      - db-data:/app/database
+
+  user-service:
+    build:
+      context: ./backend-new
+      args:
+        SERVICE_NAME: user-service
+    ports:
+      - "8082:8082"
+    environment:
+      - DB_PATH=/app/database/forum.db
+    volumes:
+      - db-data:/app/database
+
+  post-service:
+    build:
+      context: ./backend-new
+      args:
+        SERVICE_NAME: post-service
+    ports:
+      - "8083:8083"
+    environment:
+      - DB_PATH=/app/database/forum.db
+    volumes:
+      - db-data:/app/database
+
+  media-service:
+    build:
+      context: ./backend-new
+      args:
+        SERVICE_NAME: media-service
+    ports:
+      - "8084:8084"
+    environment:
+      - UPLOAD_DIR=/app/uploads
+    volumes:
+      - uploads-data:/app/uploads
+
+  chat-service:
+    build:
+      context: ./backend-new
+      args:
+        SERVICE_NAME: chat-service
+    ports:
+      - "8085:8085"
+    environment:
+      - DB_PATH=/app/database/forum.db
+    volumes:
+      - db-data:/app/database
+
+  group-service:
+    build:
+      context: ./backend-new
+      args:
+        SERVICE_NAME: group-service
+    ports:
+      - "8086:8086"
+    environment:
+      - DB_PATH=/app/database/forum.db
+    volumes:
+      - db-data:/app/database
+
+volumes:
+  db-data:
+  uploads-data:

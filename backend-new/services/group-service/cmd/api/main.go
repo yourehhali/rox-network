@@ -5,13 +5,18 @@ import (
 	"group-service/internal/handlers"
 	"log"
 	"net/http"
+	"os"
 	"social-network/pkg/database"
 	"social-network/pkg/middleware"
 )
 
 func main() {
 	// Initialize Database
-	database.InitDB("../../database/forum.db")
+	dbPath := os.Getenv("DB_PATH")
+	if dbPath == "" {
+		dbPath = "../../database/forum.db"
+	}
+	database.InitDB(dbPath)
 
 	mux := http.NewServeMux()
 

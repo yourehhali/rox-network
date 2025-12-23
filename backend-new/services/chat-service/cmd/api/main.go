@@ -5,12 +5,17 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"social-network/pkg/database"
 )
 
 func main() {
 	// Initialize Database
-	database.InitDB("../../database/forum.db")
+	dbPath := os.Getenv("DB_PATH")
+	if dbPath == "" {
+		dbPath = "../../database/forum.db"
+	}
+	database.InitDB(dbPath)
 
 	// Routes
 	http.HandleFunc("/chat/ws", handlers.ChatWebSocket)

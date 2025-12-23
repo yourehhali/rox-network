@@ -4,13 +4,17 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"post-service/internal/handlers"
 	"social-network/pkg/database"
 	"social-network/pkg/middleware"
 )
 
 func main() {
-	dbPath := "../../database/forum.db"
+	dbPath := os.Getenv("DB_PATH")
+	if dbPath == "" {
+		dbPath = "../../database/forum.db"
+	}
 	database.InitDB(dbPath)
 	fmt.Println("Post Service connected to database at", dbPath)
 
