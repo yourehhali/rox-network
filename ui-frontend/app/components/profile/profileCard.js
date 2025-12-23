@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { apiFetch, toMediaUrl } from "../../../lib/api";
 import { useAuth } from "../../../context/AuthContext";
 import { Mail,Cake,User } from "lucide-react";
+import UserListModal from "./userListModal";
 
 export default function ProfileCard() {
   const params = useSearchParams();
@@ -15,6 +16,7 @@ export default function ProfileCard() {
     following: false,
     pending: false,
   });
+  const [modalType, setModalType] = useState(null);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -161,11 +163,11 @@ export default function ProfileCard() {
                 )}
               </div>
               <div className={style.stats}>
-                <div className={style.statItem}>
+                <div className={style.statItem} onClick={() => setModalType("followers")}>
                   <span className={style.statValue}>{profile.followers}</span>
                   <span className={style.statLabel}>Followers</span>
                 </div>
-                <div className={style.statItem}>
+                <div className={style.statItem} onClick={() => setModalType("following")}>
                   <span className={style.statValue}>{profile.following}</span>
                   <span className={style.statLabel}>Following</span>
                 </div>
@@ -174,6 +176,13 @@ export default function ProfileCard() {
           </div>
         </div>
       </div>
+      {modalType && (
+        <UserListModal
+          type={modalType}
+          userId={profile.id}
+          onClose={() => setModalType(null)}
+        />
+      )}
     </div>
   );
 }

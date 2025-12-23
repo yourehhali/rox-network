@@ -104,6 +104,12 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.statItem:hover {
+    opacity: 0.8;
 }
 
 .statValue {

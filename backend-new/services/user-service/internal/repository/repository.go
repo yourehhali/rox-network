@@ -172,6 +172,54 @@ func GetFriendList(userID int) ([]Friend, error) {
 	return friends, nil
 }
 
+func GetFollowers(userID int) ([]Friend, error) {
+    query := `
+        SELECT u.id, u.username, u.first_name || ' ' || ifnull(u.last_name, '') AS full_name, u.avatar
+        FROM users u
+        JOIN followers f ON f.follower_id = u.id
+        WHERE f.followed_id = ? AND f.status = 'accepted'
+    `
+    rows, err := database.DB.Query(query, userID)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    var followers []Friend
+    for rows.Next() {
+        var f Friend
+        if err := rows.Scan(&f.ID, &f.Username, &f.FullName, &f.ImagePath); err != nil {
+            return nil, err
+        }
+        followers = append(followers, f)
+    }
+    return followers, nil
+}
+
+func GetFollowing(userID int) ([]Friend, error) {
+    query := `
+        SELECT u.id, u.username, u.first_name || ' ' || ifnull(u.last_name, '') AS full_name, u.avatar
+        FROM users u
+        JOIN followers f ON f.followed_id = u.id
+        WHERE f.follower_id = ? AND f.status = 'accepted'
+    `
+    rows, err := database.DB.Query(query, userID)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    var following []Friend
+    for rows.Next() {
+        var f Friend
+        if err := rows.Scan(&f.ID, &f.Username, &f.FullName, &f.ImagePath); err != nil {
+            return nil, err
+        }
+        following = append(following, f)
+    }
+    return following, nil
+}
+
 func GetAllUsers(currentUserID int) ([]models.Sugg, error) {
 	query := `
 		SELECT id, username, first_name, last_name, avatar

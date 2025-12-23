@@ -345,3 +345,47 @@ func UpdatePrivacy(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(res)
 }
+
+func FollowersList(w http.ResponseWriter, r *http.Request) {
+	targetIDStr := r.URL.Query().Get("id")
+	if targetIDStr == "" {
+		http.Error(w, "Missing user ID", http.StatusBadRequest)
+		return
+	}
+	targetID, err := strconv.Atoi(targetIDStr)
+	if err != nil {
+		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		return
+	}
+
+	followers, err := repository.GetFollowers(targetID)
+	if err != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(followers)
+}
+
+func FollowingList(w http.ResponseWriter, r *http.Request) {
+	targetIDStr := r.URL.Query().Get("id")
+	if targetIDStr == "" {
+		http.Error(w, "Missing user ID", http.StatusBadRequest)
+		return
+	}
+	targetID, err := strconv.Atoi(targetIDStr)
+	if err != nil {
+		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		return
+	}
+
+	following, err := repository.GetFollowing(targetID)
+	if err != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(following)
+}

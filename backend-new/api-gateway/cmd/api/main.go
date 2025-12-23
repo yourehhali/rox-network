@@ -63,6 +63,8 @@ func main() {
 			path == "/request_follow" ||
 			path == "/Friends" ||
 			path == "/users-sug" ||
+			path == "/followers" ||
+			path == "/following" ||
 			path == "/update-privacy":
 			userProxy.ServeHTTP(w, r)
 
