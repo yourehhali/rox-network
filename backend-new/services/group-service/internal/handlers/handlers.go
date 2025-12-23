@@ -409,6 +409,17 @@ func CreateEvent(w http.ResponseWriter, r *http.Request) {
 	}
 	json.NewDecoder(r.Body).Decode(&req)
 
+	// Check Membership
+	isMember, err := repository.CheckGroupMembership(req.GroupID, userID)
+	if err != nil {
+		http.Error(w, "Server error", http.StatusInternalServerError)
+		return
+	}
+	if !isMember {
+		http.Error(w, "You must be a member of the group to create an event", http.StatusForbidden)
+		return
+	}
+
 	eventID, err := repository.InsertEvent(req.GroupID, userID, req.Title, req.Description, req.EventTime)
 	if err != nil {
 		http.Error(w, "Server error", http.StatusInternalServerError)

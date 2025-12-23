@@ -34,6 +34,7 @@ type Posts struct {
 	LikesCount    int     `json:"likes_count"`
 	DislikesCount int     `json:"dislikes_count"`
 	UserReaction  *string `json:"userReaction"`
+	Privacy       int     `json:"privacy"`
 }
 
 type Sugg struct {

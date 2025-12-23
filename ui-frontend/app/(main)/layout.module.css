@@ -1,0 +1,10 @@
+.main {
+    width: 100svw;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 30px;
+    min-height: 100vh;
+    margin: 0 auto;
+}

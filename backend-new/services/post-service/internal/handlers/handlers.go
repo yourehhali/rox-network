@@ -34,6 +34,14 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 
 	title := r.FormValue("title")
 	content := r.FormValue("content")
+	privacyStr := r.FormValue("privacy")
+	privacy, _ := strconv.Atoi(privacyStr) // Default to 0 if error or empty
+
+	allowedUsersStr := r.FormValue("allowed_users") // Comma separated IDs e.g. "1,2,3"
+	var allowedUsers []string
+	if allowedUsersStr != "" {
+		allowedUsers = strings.Split(allowedUsersStr, ",")
+	}
 
 	var imagePath string
 	file, handler, err := r.FormFile("image")
@@ -60,7 +68,7 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		io.Copy(f, file)
 	}
 
-	ID, err := repository.AddNewPost(userID, title, content, imagePath)
+	ID, err := repository.AddNewPost(userID, title, content, imagePath, privacy, allowedUsers)
 	if err != nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)
 		fmt.Println("There is a problem in the database:", err)
@@ -121,7 +129,12 @@ func GetPostsByUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	posts, err := repository.GetUserPosts(userID)
+	viewerID, ok := r.Context().Value(middleware.UserIDKey).(int)
+	if !ok {
+		viewerID = 0
+	}
+
+	posts, err := repository.GetUserPosts(userID, viewerID)
 	if err != nil {
 		fmt.Println("Error getting user posts:", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -235,7 +248,7 @@ func SubmitComment(w http.ResponseWriter, r *http.Request) {
 				filename := fmt.Sprintf("comment_%d_%s", time.Now().Unix(), handler.Filename)
 				imagePath = "uploads/" + filename
 				fullPath := uploadDir + "/" + filename
-				
+
 				f, err := os.Create(fullPath)
 				if err == nil {
 					defer f.Close()

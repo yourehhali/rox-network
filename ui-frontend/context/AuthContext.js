@@ -35,6 +35,16 @@ export function AuthProvider({ children }) {
     checkSession();
   }, []);
 
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      setUser(null);
+      router.push('/login');
+    };
+
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
+  }, [router]);
+
   const login = (userData) => {
     setUser(userData);
     router.push('/');

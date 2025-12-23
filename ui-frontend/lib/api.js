@@ -21,7 +21,9 @@ export async function apiFetch(endpoint, options = {}) {
   const response = await fetch(url, config);
 
   if (response.status === 401) {
-    window.location.href = '/login';
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('auth:unauthorized'));
+    }
   }
 
   return response;

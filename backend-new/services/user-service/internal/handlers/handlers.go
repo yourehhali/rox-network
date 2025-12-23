@@ -4,10 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"os"
 	"social-network/pkg/middleware"
 	"social-network/pkg/models"
 	"strconv"
+	"time"
 	"user-service/internal/repository"
 )
 
@@ -344,6 +347,72 @@ func UpdatePrivacy(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(res)
+}
+
+func UpdateProfile(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	err := r.ParseMultipartForm(10 << 20)
+	if err != nil {
+		http.Error(w, "Error parsing form", http.StatusBadRequest)
+		return
+	}
+
+	var u models.User
+	u.FirstName = r.FormValue("first_name")
+	u.LastName = r.FormValue("last_name")
+
+	nick := r.FormValue("nickname")
+	u.Nickname = &nick
+
+	about := r.FormValue("about")
+	u.About = &about
+
+	isPrivateStr := r.FormValue("is_private")
+	isPrivate, _ := strconv.Atoi(isPrivateStr)
+	u.IsPrivate = &isPrivate
+
+	// Handle avatar upload
+	file, handler, err := r.FormFile("avatar")
+	if err == nil {
+		defer file.Close()
+		uploadDir := "../../uploads"
+		if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
+			os.MkdirAll(uploadDir, 0755)
+		}
+		filename := fmt.Sprintf("%d_%s", time.Now().Unix(), handler.Filename)
+		avatarPath := "uploads/" + filename
+		fullPath := uploadDir + "/" + filename
+
+		f, err := os.Create(fullPath)
+		if err != nil {
+			http.Error(w, "Cannot save image", http.StatusInternalServerError)
+			return
+		}
+		defer f.Close()
+		io.Copy(f, file)
+		u.Avatar = &avatarPath
+	} else {
+		// Preserve existing avatar if not updated
+		currentUser, err := repository.GetUserInfo(userID)
+		if err == nil {
+			u.Avatar = currentUser.Avatar
+		}
+	}
+
+	err = repository.UpdateUserInfo(userID, u)
+	if err != nil {
+		fmt.Printf("UpdateUserInfo error: %v\n", err)
+		http.Error(w, "Failed to update profile", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Profile updated successfully"})
 }
 
 func FollowersList(w http.ResponseWriter, r *http.Request) {

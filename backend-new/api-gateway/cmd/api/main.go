@@ -65,7 +65,8 @@ func main() {
 			path == "/users-sug" ||
 			path == "/followers" ||
 			path == "/following" ||
-			path == "/update-privacy":
+			path == "/update-privacy" ||
+			path == "/update-profile":
 			userProxy.ServeHTTP(w, r)
 
 		case path == "/Createpost" ||

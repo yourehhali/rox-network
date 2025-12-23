@@ -23,8 +23,10 @@ var upgrader = websocket.Upgrader{
 func ChatWebSocket(w http.ResponseWriter, r *http.Request) {
 	// 1. Try to authenticate via Cookie first
 	var userID int
+	var sessionToken string
 	if cookie, err := r.Cookie("session"); err == nil {
-		userID, _ = sharedRepo.GetUserIDBySessionToken(cookie.Value)
+		sessionToken = cookie.Value
+		userID, _ = sharedRepo.GetUserIDBySessionToken(sessionToken)
 	}
 
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -42,13 +44,13 @@ func ChatWebSocket(w http.ResponseWriter, r *http.Request) {
 		}
 
 		msgType, _ := authMsg["type"].(string)
-		sessionToken, _ := authMsg["session_token"].(string)
+		token, _ := authMsg["session_token"].(string)
 
-		if msgType != "auth" || sessionToken == "" {
+		if msgType != "auth" || token == "" {
 			conn.Close()
 			return
 		}
-
+		sessionToken = token
 		userID, err = sharedRepo.GetUserIDBySessionToken(sessionToken)
 		if err != nil {
 			conn.Close()
@@ -56,11 +58,11 @@ func ChatWebSocket(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	repository.AddChatClient(userID, conn)
-	log.Printf("User %d connected to Chat", userID)
+	repository.AddChatClient(userID, sessionToken, conn)
+	log.Printf("User %d connected to Chat (Session: %s)", userID, sessionToken)
 
 	// Cleanup on exit
-	defer repository.RemoveChatClient(userID)
+	defer repository.RemoveChatClient(userID, sessionToken, conn)
 
 	// Message Loop
 	for {
@@ -107,12 +109,12 @@ func handlePrivateMessage(senderID int, msg map[string]interface{}) {
 		"sender":      sender,
 	}
 
-	// Send to receiver
-	if conn := repository.GetChatClient(receiverID); conn != nil {
+	// Send to receiver (all sessions)
+	for _, conn := range repository.GetChatClients(receiverID) {
 		conn.WriteJSON(resp)
 	}
-	// Send back to sender
-	if conn := repository.GetChatClient(senderID); conn != nil {
+	// Send back to sender (all sessions)
+	for _, conn := range repository.GetChatClients(senderID) {
 		conn.WriteJSON(resp)
 	}
 }
@@ -146,7 +148,7 @@ func handleGroupMessage(senderID int, msg map[string]interface{}) {
 
 	members, _ := repository.GetGroupMembers(groupID)
 	for _, memberID := range members {
-		if conn := repository.GetChatClient(memberID); conn != nil {
+		for _, conn := range repository.GetChatClients(memberID) {
 			conn.WriteJSON(resp)
 		}
 	}
@@ -160,72 +162,32 @@ func NotificationWebSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Auth Handshake (similar to Chat)
-	// If frontend doesn't send auth message for notif, we might need cookie check.
-	// But let's assume consistent auth flow or cookie availability.
-	// Since standard WS client in JS doesn't send custom headers easily, query param or initial message is best.
-	// Old code: socke_tunnel.go used r.Context().Value(UserIDKey).
-	// This implies the upgrade request had cookies and passed middleware.
-	// So we need to parse cookies manually or hope middleware ran.
-	// But `chat-service` main.go might not have full AuthMiddleware if it's behind gateway.
-	// Actually, Gateway proxies requests. Headers (Cookie) are preserved.
-	// So we can check cookie manually or use middleware.
-	// I'll implement a simple cookie check here if context is missing, or rely on auth message if frontend is updated.
-	// Given I can't easily change frontend, I'll try to support both or stick to what `socke_tunnel.go` implied.
-	// `socke_tunnel.go` had `ID_USER := r.Context().Value(key.UserIDKey)`.
-	// This means I MUST wrap this handler in AuthMiddleware in main.go.
-
-	// But wait, WS upgrade might happen before middleware can set context if not careful?
-	// Standard http.Handler flow: Middleware -> Handler. So context should be set.
-	// I'll assume AuthMiddleware is used in main.go.
-
-	// Wait, if I rely on context, I need to import middleware.
-	// But `handlers` package shouldn't import `middleware` if `middleware` imports `handlers` (cycle).
-	// `middleware` is in `pkg/middleware`, so it's fine.
-
-	// BUT, `socke_tunnel.go` used `key.UserIDKey`.
-	// I need to know what key `pkg/middleware` uses.
-	// `pkg/middleware` uses `UserIDKey`.
-
-	// Issue: `r.Context().Value("userID")` (string) or type?
-	// Let's check `pkg/middleware`.
-
-	// I'll check `pkg/middleware` in a moment. For now, I'll assume I can get UserID.
-
-	// If UserID is not in context (e.g. middleware not used), I'll try to read cookie.
-	// But let's assume middleware is used.
-
-	// Wait, `socke_tunnel.go` does NOT read an initial auth message. It just upgrades and registers.
-	// So I should just register the user from Context.
-
-	// Retrieve UserID (assuming middleware put it there)
-	// I'll use a helper to get it safely.
-
 	cookie, err := r.Cookie("session")
 	var userID int
+	var sessionToken string
+
 	if err == nil {
-		userID, _ = sharedRepo.GetUserIDBySessionToken(cookie.Value)
+		sessionToken = cookie.Value
+		userID, _ = sharedRepo.GetUserIDBySessionToken(sessionToken)
 	}
 
 	// If no cookie or invalid, try query param?
 	if userID == 0 {
 		token := r.URL.Query().Get("session")
 		if token != "" {
+			sessionToken = token
 			userID, _ = sharedRepo.GetUserIDBySessionToken(token)
 		}
 	}
 
 	if userID == 0 {
-		// Try context if middleware was used
-		// But I don't want to depend on middleware package here if I can avoid it to keep loose coupling?
-		// Actually, standard is to use middleware.
 		conn.Close()
 		return
 	}
 
-	repository.AddNotificationClient(userID, conn)
-	log.Printf("User %d connected to Notifications", userID)
-	defer repository.RemoveNotificationClient(userID)
+	repository.AddNotificationClient(userID, sessionToken, conn)
+	log.Printf("User %d connected to Notifications (Session: %s)", userID, sessionToken)
+	defer repository.RemoveNotificationClient(userID, sessionToken, conn)
 
 	// Send unread notifications immediately
 	unreads, _ := repository.GetUnreadNotifications(userID)
@@ -254,7 +216,7 @@ func HandleInternalNotification(w http.ResponseWriter, r *http.Request) {
 
 	// If type is notification_removed, just broadcast and return (don't save to DB)
 	if n.Type == "notification_removed" {
-		if conn := repository.GetNotificationClient(n.UserID); conn != nil {
+		for _, conn := range repository.GetNotificationClients(n.UserID) {
 			conn.WriteJSON(n)
 		}
 		w.WriteHeader(http.StatusOK)
@@ -302,7 +264,7 @@ func HandleInternalNotification(w http.ResponseWriter, r *http.Request) {
 	n.CreatedAt = time.Now().Format(time.RFC3339)
 
 	// Send to WebSocket
-	if conn := repository.GetNotificationClient(n.UserID); conn != nil {
+	for _, conn := range repository.GetNotificationClients(n.UserID) {
 		conn.WriteJSON(n)
 	}
 

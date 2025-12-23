@@ -24,6 +24,7 @@ func main() {
 	mux.HandleFunc("/Friends", middleware.AuthMiddleware(handlers.GetFriendList))
 	mux.HandleFunc("/users-sug", middleware.AuthMiddleware(handlers.GetSuggestedUsers))
 	mux.HandleFunc("/update-privacy", middleware.AuthMiddleware(handlers.UpdatePrivacy))
+	mux.HandleFunc("/update-profile", middleware.AuthMiddleware(handlers.UpdateProfile))
 	mux.HandleFunc("/followers", middleware.AuthMiddleware(handlers.FollowersList))
 	mux.HandleFunc("/following", middleware.AuthMiddleware(handlers.FollowingList))
 	// Add other handlers...

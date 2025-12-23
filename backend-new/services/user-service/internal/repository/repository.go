@@ -22,8 +22,14 @@ const (
 	DELETE_FOLLOW          = `DELETE FROM followers WHERE follower_id = ? AND followed_id = ?`
 	UPDATE_FOLLOW_STATUS   = `UPDATE followers SET status = ? WHERE follower_id = ? AND followed_id = ?`
 	CHECK_PRIVACY          = `SELECT is_private FROM users WHERE id = ?`
+	UPDATE_USER_INFO       = `UPDATE users SET first_name = ?, last_name = ?, nickname = ?, about = ?, avatar = ?, is_private = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
 	// Suggestion queries, etc. can be added here
 )
+
+func UpdateUserInfo(userID int, u models.User) error {
+	_, err := database.DB.Exec(UPDATE_USER_INFO, u.FirstName, u.LastName, u.Nickname, u.About, u.Avatar, u.IsPrivate, userID)
+	return err
+}
 
 func GetUserInfo(userId int) (models.User, error) {
 	var user models.User
@@ -173,51 +179,51 @@ func GetFriendList(userID int) ([]Friend, error) {
 }
 
 func GetFollowers(userID int) ([]Friend, error) {
-    query := `
+	query := `
         SELECT u.id, u.username, u.first_name || ' ' || ifnull(u.last_name, '') AS full_name, u.avatar
         FROM users u
         JOIN followers f ON f.follower_id = u.id
         WHERE f.followed_id = ? AND f.status = 'accepted'
     `
-    rows, err := database.DB.Query(query, userID)
-    if err != nil {
-        return nil, err
-    }
-    defer rows.Close()
+	rows, err := database.DB.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
-    var followers []Friend
-    for rows.Next() {
-        var f Friend
-        if err := rows.Scan(&f.ID, &f.Username, &f.FullName, &f.ImagePath); err != nil {
-            return nil, err
-        }
-        followers = append(followers, f)
-    }
-    return followers, nil
+	var followers []Friend
+	for rows.Next() {
+		var f Friend
+		if err := rows.Scan(&f.ID, &f.Username, &f.FullName, &f.ImagePath); err != nil {
+			return nil, err
+		}
+		followers = append(followers, f)
+	}
+	return followers, nil
 }
 
 func GetFollowing(userID int) ([]Friend, error) {
-    query := `
+	query := `
         SELECT u.id, u.username, u.first_name || ' ' || ifnull(u.last_name, '') AS full_name, u.avatar
         FROM users u
         JOIN followers f ON f.followed_id = u.id
         WHERE f.follower_id = ? AND f.status = 'accepted'
     `
-    rows, err := database.DB.Query(query, userID)
-    if err != nil {
-        return nil, err
-    }
-    defer rows.Close()
+	rows, err := database.DB.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
-    var following []Friend
-    for rows.Next() {
-        var f Friend
-        if err := rows.Scan(&f.ID, &f.Username, &f.FullName, &f.ImagePath); err != nil {
-            return nil, err
-        }
-        following = append(following, f)
-    }
-    return following, nil
+	var following []Friend
+	for rows.Next() {
+		var f Friend
+		if err := rows.Scan(&f.ID, &f.Username, &f.FullName, &f.ImagePath); err != nil {
+			return nil, err
+		}
+		following = append(following, f)
+	}
+	return following, nil
 }
 
 func GetAllUsers(currentUserID int) ([]models.Sugg, error) {

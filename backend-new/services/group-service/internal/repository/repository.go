@@ -6,6 +6,72 @@ import (
 	"time"
 )
 
+var (
+	CHECK_GROUP_MEMBERSHIP     = "SELECT COUNT(*) FROM group_members WHERE group_id = ? AND user_id = ? AND status = 'member'"
+	INSERT_GROUP               = "INSERT INTO groups (title, description, creator_id) VALUES (?, ?, ?)"
+	INSERT_GROUP_MEMBER        = "INSERT INTO group_members (group_id, user_id, status) VALUES (?, ?, ?)"
+	UPDATE_GROUP_MEMBER_STATUS = "UPDATE group_members SET status = ? WHERE group_id = ? AND user_id = ?"
+	REMOVE_GROUP_MEMBER        = "DELETE FROM group_members WHERE group_id = ? AND user_id = ?"
+	SELECT_GROUPS_WITH_STATUS  = `
+		SELECT g.id, g.title, g.description, g.creator_id, gm.status
+		FROM groups g
+		LEFT JOIN group_members gm
+		  ON gm.group_id = g.id AND gm.user_id = ?
+	`
+	SELECT_GROUP_BY_ID           = "SELECT id, title, description, creator_id FROM groups WHERE id = ?"
+	SELECT_GROUP_MEMBERS_IDS     = "SELECT user_id FROM group_members WHERE group_id = ? AND status = 'member'"
+	SELECT_GROUP_MEMBERS_DETAILS = `
+		SELECT u.id, u.username, u.first_name, u.last_name, COALESCE(u.avatar, ''), gm.status
+		FROM group_members gm
+		JOIN users u ON gm.user_id = u.id
+		WHERE gm.group_id = ? AND gm.status = 'member'
+	`
+	INSERT_GROUP_POST = `
+		INSERT INTO group_posts (title, content, image, creator_id, group_id, created_at)
+		VALUES (?, ?, ?, ?, ?, ?)`
+	SELECT_GROUP_POST_BY_ID = `
+		SELECT gp.id, gp.group_id, gp.creator_id, gp.title, gp.content, gp.image, gp.created_at, gp.created_at,
+		       u.username, u.first_name || ' ' || u.last_name
+		FROM group_posts gp
+		JOIN users u ON gp.creator_id = u.id
+		WHERE gp.id = ?
+	`
+	SELECT_GROUP_POSTS = `
+		SELECT gp.id, gp.group_id, gp.creator_id, gp.title, gp.content, gp.image, gp.created_at, gp.created_at,
+		       u.username, u.first_name || ' ' || u.last_name
+		FROM group_posts gp
+		JOIN users u ON gp.creator_id = u.id
+		WHERE gp.group_id = ?
+		ORDER BY gp.created_at DESC
+	`
+	INSERT_EVENT = `
+		INSERT INTO events (title, description, creator_id, group_id, event_time)
+		VALUES (?, ?, ?, ?, ?)`
+	INSERT_EVENT_MEMBER = "INSERT INTO event_members (event_id, user_id, status) VALUES (?, ?, ?)"
+	CHECK_EVENT_MEMBER  = "SELECT COUNT(*) FROM event_members WHERE event_id = ? AND user_id = ?"
+	UPDATE_EVENT_MEMBER = "UPDATE event_members SET status = ? WHERE event_id = ? AND user_id = ?"
+	SELECT_GROUP_EVENTS = `
+		SELECT e.id, e.title, e.description, e.event_time, e.creator_id,
+		       COALESCE(em.status, 'not_going') as user_status
+		FROM events e
+		LEFT JOIN event_members em ON e.id = em.event_id AND em.user_id = ?
+		WHERE e.group_id = ?
+	`
+	SELECT_GROUPS_FOR_INVITE = `
+    SELECT g.id, g.title, g.description, g.creator_id
+    FROM groups g
+    JOIN group_members current_member 
+        ON current_member.group_id = g.id 
+       AND current_member.user_id = ? 
+       AND current_member.status = 'member'
+    LEFT JOIN group_members target_member 
+        ON target_member.group_id = g.id 
+       AND target_member.user_id = ? 
+       AND target_member.status = 'member'
+    WHERE target_member.user_id IS NULL;
+    `
+)
+
 type Group struct {
 	ID          int    `json:"id"`
 	Title       string `json:"title"`
@@ -15,7 +81,7 @@ type Group struct {
 
 type GroupWithStatus struct {
 	Group
-	UserStatus string `json:"user_status"` // 'member', 'pending', 'not_member'
+	UserStatus string `json:"user_status"`
 }
 
 type GroupPost struct {
@@ -38,12 +104,20 @@ type Event struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	EventTime   string `json:"event_time"`
-	UserStatus  string `json:"user_status,omitempty"` // for event-going
+	UserStatus  string `json:"user_status,omitempty"`
 }
 
-// InsertGroup creates a new group
+func CheckGroupMembership(groupID, userID int) (bool, error) {
+	var count int
+	err := database.DB.QueryRow(CHECK_GROUP_MEMBERSHIP, groupID, userID).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
 func InsertGroup(title, description string, creatorID int) (int64, error) {
-	result, err := database.DB.Exec(`INSERT INTO groups (title, description, creator_id) VALUES (?, ?, ?)`,
+	result, err := database.DB.Exec(INSERT_GROUP,
 		title, description, creatorID)
 	if err != nil {
 		return 0, err
@@ -51,35 +125,26 @@ func InsertGroup(title, description string, creatorID int) (int64, error) {
 	return result.LastInsertId()
 }
 
-// InsertGroupMember adds a user to a group
 func InsertGroupMember(groupID, userID int, status string) error {
-	_, err := database.DB.Exec(`INSERT INTO group_members (group_id, user_id, status) VALUES (?, ?, ?)`,
+	_, err := database.DB.Exec(INSERT_GROUP_MEMBER,
 		groupID, userID, status)
 	return err
 }
 
-// UpdateGroupMemberStatus updates status (e.g., pending -> member)
 func UpdateGroupMemberStatus(groupID, userID int, status string) error {
-	_, err := database.DB.Exec(`UPDATE group_members SET status = ? WHERE group_id = ? AND user_id = ?`,
+	_, err := database.DB.Exec(UPDATE_GROUP_MEMBER_STATUS,
 		status, groupID, userID)
 	return err
 }
 
-// RemoveGroupMember removes a member (reject join)
 func RemoveGroupMember(groupID, userID int) error {
-	_, err := database.DB.Exec(`DELETE FROM group_members WHERE group_id = ? AND user_id = ?`,
+	_, err := database.DB.Exec(REMOVE_GROUP_MEMBER,
 		groupID, userID)
 	return err
 }
 
-// GetGroups returns all groups with user status
 func GetGroups(userID int) ([]GroupWithStatus, error) {
-	rows, err := database.DB.Query(`
-		SELECT g.id, g.title, g.description, g.creator_id, gm.status
-		FROM groups g
-		LEFT JOIN group_members gm
-		  ON gm.group_id = g.id AND gm.user_id = ?
-	`, userID)
+	rows, err := database.DB.Query(SELECT_GROUPS_WITH_STATUS, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -102,10 +167,9 @@ func GetGroups(userID int) ([]GroupWithStatus, error) {
 	return groups, nil
 }
 
-// GetGroupByID returns a single group
 func GetGroupByID(groupID int) (*Group, error) {
 	var g Group
-	err := database.DB.QueryRow(`SELECT id, title, description, creator_id FROM groups WHERE id = ?`, groupID).
+	err := database.DB.QueryRow(SELECT_GROUP_BY_ID, groupID).
 		Scan(&g.ID, &g.Title, &g.Description, &g.CreatorID)
 	if err != nil {
 		return nil, err
@@ -113,9 +177,8 @@ func GetGroupByID(groupID int) (*Group, error) {
 	return &g, nil
 }
 
-// GetGroupMembers returns user IDs of group members
 func GetGroupMembers(groupID int) ([]int, error) {
-	rows, err := database.DB.Query(`SELECT user_id FROM group_members WHERE group_id = ? AND status = 'member'`, groupID)
+	rows, err := database.DB.Query(SELECT_GROUP_MEMBERS_IDS, groupID)
 	if err != nil {
 		return nil, err
 	}
@@ -140,14 +203,8 @@ type GroupMember struct {
 	Status    string `json:"status"`
 }
 
-// GetGroupMembersDetails returns user details of group members
 func GetGroupMembersDetails(groupID int) ([]GroupMember, error) {
-	rows, err := database.DB.Query(`
-		SELECT u.id, u.username, u.first_name, u.last_name, COALESCE(u.avatar, ''), gm.status
-		FROM group_members gm
-		JOIN users u ON gm.user_id = u.id
-		WHERE gm.group_id = ? AND gm.status = 'member'
-	`, groupID)
+	rows, err := database.DB.Query(SELECT_GROUP_MEMBERS_DETAILS, groupID)
 	if err != nil {
 		return nil, err
 	}
@@ -164,11 +221,8 @@ func GetGroupMembersDetails(groupID int) ([]GroupMember, error) {
 	return members, nil
 }
 
-// InsertGroupPost creates a post in a group
 func InsertGroupPost(groupID, creatorID int, title, content, image string) (int64, error) {
-	result, err := database.DB.Exec(`
-		INSERT INTO group_posts (title, content, image, creator_id, group_id, created_at)
-		VALUES (?, ?, ?, ?, ?, ?)`,
+	result, err := database.DB.Exec(INSERT_GROUP_POST,
 		title, content, image, creatorID, groupID, time.Now())
 	if err != nil {
 		return 0, err
@@ -176,17 +230,10 @@ func InsertGroupPost(groupID, creatorID int, title, content, image string) (int6
 	return result.LastInsertId()
 }
 
-// GetGroupPostByID retrieves a single group post
 func GetGroupPostByID(postID int) (*GroupPost, error) {
 	var p GroupPost
 	var createdAt, updatedAt time.Time
-	err := database.DB.QueryRow(`
-		SELECT gp.id, gp.group_id, gp.creator_id, gp.title, gp.content, gp.image, gp.created_at, gp.created_at,
-		       u.username, u.first_name || ' ' || u.last_name
-		FROM group_posts gp
-		JOIN users u ON gp.creator_id = u.id
-		WHERE gp.id = ?
-	`, postID).Scan(&p.ID, &p.GroupID, &p.CreatorID, &p.Title, &p.Content, &p.Image, &createdAt, &updatedAt, &p.UserName, &p.FullName)
+	err := database.DB.QueryRow(SELECT_GROUP_POST_BY_ID, postID).Scan(&p.ID, &p.GroupID, &p.CreatorID, &p.Title, &p.Content, &p.Image, &createdAt, &updatedAt, &p.UserName, &p.FullName)
 
 	if err != nil {
 		return nil, err
@@ -196,16 +243,8 @@ func GetGroupPostByID(postID int) (*GroupPost, error) {
 	return &p, nil
 }
 
-// GetGroupPosts retrieves all posts for a group
 func GetGroupPosts(groupID int) ([]GroupPost, error) {
-	rows, err := database.DB.Query(`
-		SELECT gp.id, gp.group_id, gp.creator_id, gp.title, gp.content, gp.image, gp.created_at, gp.created_at,
-		       u.username, u.first_name || ' ' || u.last_name
-		FROM group_posts gp
-		JOIN users u ON gp.creator_id = u.id
-		WHERE gp.group_id = ?
-		ORDER BY gp.created_at DESC
-	`, groupID)
+	rows, err := database.DB.Query(SELECT_GROUP_POSTS, groupID)
 	if err != nil {
 		return nil, err
 	}
@@ -225,11 +264,8 @@ func GetGroupPosts(groupID int) ([]GroupPost, error) {
 	return posts, nil
 }
 
-// InsertEvent creates a new event
 func InsertEvent(groupID, creatorID int, title, description, eventTime string) (int64, error) {
-	result, err := database.DB.Exec(`
-		INSERT INTO events (title, description, creator_id, group_id, event_time)
-		VALUES (?, ?, ?, ?, ?)`,
+	result, err := database.DB.Exec(INSERT_EVENT,
 		title, description, creatorID, groupID, eventTime)
 	if err != nil {
 		return 0, err
@@ -237,39 +273,29 @@ func InsertEvent(groupID, creatorID int, title, description, eventTime string) (
 	return result.LastInsertId()
 }
 
-// InsertEventMember adds a user to an event
 func InsertEventMember(eventID, userID int, status string) error {
-	_, err := database.DB.Exec(`INSERT INTO event_members (event_id, user_id, status) VALUES (?, ?, ?)`,
+	_, err := database.DB.Exec(INSERT_EVENT_MEMBER,
 		eventID, userID, status)
 	return err
 }
 
-// UpdateEventMemberStatus updates event member status (going/not_going)
 func UpdateEventMemberStatus(eventID, userID int, status string) error {
-	// Check if exists
 	var count int
-	err := database.DB.QueryRow(`SELECT COUNT(*) FROM event_members WHERE event_id = ? AND user_id = ?`, eventID, userID).Scan(&count)
+	err := database.DB.QueryRow(CHECK_EVENT_MEMBER, eventID, userID).Scan(&count)
 	if err != nil {
 		return err
 	}
 
 	if count > 0 {
-		_, err = database.DB.Exec(`UPDATE event_members SET status = ? WHERE event_id = ? AND user_id = ?`, status, eventID, userID)
+		_, err = database.DB.Exec(UPDATE_EVENT_MEMBER, status, eventID, userID)
 	} else {
-		_, err = database.DB.Exec(`INSERT INTO event_members (event_id, user_id, status) VALUES (?, ?, ?)`, eventID, userID, status)
+		_, err = database.DB.Exec(INSERT_EVENT_MEMBER, eventID, userID, status)
 	}
 	return err
 }
 
-// GetGroupEvents retrieves events for a group
 func GetGroupEvents(groupID, userID int) ([]Event, error) {
-	rows, err := database.DB.Query(`
-		SELECT e.id, e.title, e.description, e.event_time, e.creator_id,
-		       COALESCE(em.status, 'not_going') as user_status
-		FROM events e
-		LEFT JOIN event_members em ON e.id = em.event_id AND em.user_id = ?
-		WHERE e.group_id = ?
-	`, userID, groupID)
+	rows, err := database.DB.Query(SELECT_GROUP_EVENTS, userID, groupID)
 	if err != nil {
 		return nil, err
 	}
@@ -287,22 +313,8 @@ func GetGroupEvents(groupID, userID int) ([]Event, error) {
 	return events, nil
 }
 
-// GetGroupsForInvite returns groups where current user is member and target user is NOT member
 func GetGroupsForInvite(currentUserID, targetUserID int) ([]Group, error) {
-	query := `
-    SELECT g.id, g.title, g.description, g.creator_id
-    FROM groups g
-    JOIN group_members current_member 
-        ON current_member.group_id = g.id 
-       AND current_member.user_id = ? 
-       AND current_member.status = 'member'
-    LEFT JOIN group_members target_member 
-        ON target_member.group_id = g.id 
-       AND target_member.user_id = ? 
-       AND target_member.status = 'member'
-    WHERE target_member.user_id IS NULL;
-    `
-	rows, err := database.DB.Query(query, currentUserID, targetUserID)
+	rows, err := database.DB.Query(SELECT_GROUPS_FOR_INVITE, currentUserID, targetUserID)
 	if err != nil {
 		return nil, err
 	}

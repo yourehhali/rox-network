@@ -3,11 +3,22 @@ import { useState } from "react";
 import { apiFetch } from "../../../lib/api";
 import styles from "./CreateGroupModal.module.css";
 
-export default function CreateGroupModal({ onSuccess }) {
-  const [open, setOpen] = useState(false);
+export default function CreateGroupModal({ onSuccess, isOpen, onClose }) {
+  const [internalOpen, setInternalOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
   const [error, setError] = useState("");
+
+  const isControlled = typeof isOpen !== "undefined";
+  const open = isControlled ? isOpen : internalOpen;
+
+  const handleClose = () => {
+    if (isControlled) {
+      if (onClose) onClose();
+    } else {
+      setInternalOpen(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,7 +33,11 @@ export default function CreateGroupModal({ onSuccess }) {
       if (res.ok) {
         setTitle("");
         setDesc("");
-        setOpen(false);
+        if (isControlled) {
+             if (onClose) onClose();
+        } else {
+             setInternalOpen(false);
+        }
         if (onSuccess) onSuccess();
       } else {
         const errData = await res.text();
@@ -35,9 +50,11 @@ export default function CreateGroupModal({ onSuccess }) {
 
   return (
     <>
-      <button className={styles.createBtn} onClick={() => setOpen(true)}>
-        + Create Group
-      </button>
+      {!isControlled && (
+        <button className={styles.createBtn} onClick={() => setInternalOpen(true)}>
+          + Create Group
+        </button>
+      )}
 
       {open && (
         <div className={styles.overlay}>
@@ -64,7 +81,7 @@ export default function CreateGroupModal({ onSuccess }) {
                 <button
                   type="button"
                   className={styles.cancelBtn}
-                  onClick={() => setOpen(false)}
+                  onClick={handleClose}
                 >
                   Cancel
                 </button>

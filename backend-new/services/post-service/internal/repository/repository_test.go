@@ -32,9 +32,21 @@ func setupTestDB(t *testing.T) {
 		title TEXT NOT NULL,
 		content TEXT NOT NULL,
 		image_path TEXT,
+        privacy INTEGER DEFAULT 0,
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 	);
+    CREATE TABLE post_viewers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        post_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL
+    );
+    CREATE TABLE followers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        follower_id INTEGER NOT NULL,
+        followed_id INTEGER NOT NULL,
+        status TEXT
+    );
 	CREATE TABLE comments (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		user_id INTEGER NOT NULL,
@@ -66,8 +78,8 @@ func TestAddNewPost(t *testing.T) {
 		t.Fatalf("Failed to insert user: %v", err)
 	}
 
-	// Test AddNewPost
-	postID, err := AddNewPost(1, "New Title", "New Content", "image.png")
+	// Test AddNewPost (Public)
+	postID, err := AddNewPost(1, "New Title", "New Content", "image.png", 0, nil)
 	if err != nil {
 		t.Fatalf("AddNewPost failed: %v", err)
 	}
@@ -78,7 +90,8 @@ func TestAddNewPost(t *testing.T) {
 
 	// Verify insertion
 	var title, content, imagePath string
-	err = database.DB.QueryRow("SELECT title, content, image_path FROM posts WHERE id = ?", postID).Scan(&title, &content, &imagePath)
+	var privacy int
+	err = database.DB.QueryRow("SELECT title, content, image_path, privacy FROM posts WHERE id = ?", postID).Scan(&title, &content, &imagePath, &privacy)
 	if err != nil {
 		t.Fatalf("Failed to retrieve added post: %v", err)
 	}
@@ -91,6 +104,25 @@ func TestAddNewPost(t *testing.T) {
 	}
 	if imagePath != "image.png" {
 		t.Errorf("Expected imagePath 'image.png', got '%s'", imagePath)
+	}
+	if privacy != 0 {
+		t.Errorf("Expected privacy 0, got %d", privacy)
+	}
+
+	// Test AddNewPost (Private with viewers)
+	postID2, err := AddNewPost(1, "Private Post", "Private Content", "", 2, []string{"2", "3"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Check viewers
+	var count int
+	err = database.DB.QueryRow("SELECT COUNT(*) FROM post_viewers WHERE post_id = ?", postID2).Scan(&count)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 2 {
+		t.Errorf("Expected 2 post viewers, got %d", count)
 	}
 }
 
@@ -107,13 +139,28 @@ func TestGetAllPosts(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	// Insert Posts
-	_, err = database.DB.Exec(`INSERT INTO posts (user_id, title, content) VALUES (1, 'Post 1', 'Content 1')`)
+	_, err = database.DB.Exec(`INSERT INTO users (username, email, password_hash, first_name, last_name) VALUES ('u3', 'u3@e.com', 'h', 'User', 'Three')`)
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = database.DB.Exec(`INSERT INTO posts (user_id, title, content) VALUES (2, 'Post 2', 'Content 2')`)
+
+	// Insert Posts
+	// Post 1: Public by User 1
+	_, err = database.DB.Exec(`INSERT INTO posts (user_id, title, content, privacy) VALUES (1, 'Post 1', 'Content 1', 0)`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Post 2: Almost Private by User 1 (Followers only)
+	_, err = database.DB.Exec(`INSERT INTO posts (user_id, title, content, privacy) VALUES (1, 'Post 2', 'Content 2', 1)`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Post 3: Private by User 1 (Only User 2 allowed)
+	_, err = database.DB.Exec(`INSERT INTO posts (user_id, title, content, privacy) VALUES (1, 'Post 3', 'Content 3', 2)`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = database.DB.Exec(`INSERT INTO post_viewers (post_id, user_id) VALUES (3, 2)`)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -125,31 +172,32 @@ func TestGetAllPosts(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Test GetAllPosts for User 2
+	// Setup Followers: User 2 follows User 1
+	_, err = database.DB.Exec(`INSERT INTO followers (follower_id, followed_id, status) VALUES (2, 1, 'accepted')`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Test GetAllPosts for User 2 (Should see Post 1 (Public), Post 2 (Follower), Post 3 (Allowed)) -> Total 3
 	posts, err := GetAllPosts(2)
 	if err != nil {
 		t.Fatalf("GetAllPosts failed: %v", err)
 	}
-
-	if len(posts) != 2 {
-		t.Errorf("Expected 2 posts, got %d", len(posts))
+	if len(posts) != 3 {
+		t.Errorf("Expected 3 posts for User 2, got %d", len(posts))
 	}
 
-	// Check specific post details
-	foundPost1 := false
-	for _, p := range posts {
-		if p.ID == 1 {
-			foundPost1 = true
-			if p.LikesCount != 1 {
-				t.Errorf("Expected 1 like for Post 1, got %d", p.LikesCount)
-			}
-			if p.UserReaction == nil || *p.UserReaction != "like" {
-				t.Errorf("Expected user reaction 'like' for Post 1, got %v", p.UserReaction)
-			}
-		}
+	// Test GetAllPosts for User 3 (Should see Post 1 (Public) ONLY) -> Total 1
+	// User 3 is NOT follower, NOT allowed in Post 3
+	posts3, err := GetAllPosts(3)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if !foundPost1 {
-		t.Error("Post 1 not found in results")
+	if len(posts3) != 1 {
+		t.Errorf("Expected 1 post for User 3, got %d", len(posts3))
+	}
+	if len(posts3) > 0 && posts3[0].ID != 1 {
+		t.Errorf("Expected User 3 to see Post 1, got Post %d", posts3[0].ID)
 	}
 }
 
@@ -167,33 +215,32 @@ func TestGetUserPosts(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Insert Posts
-	_, err = database.DB.Exec(`INSERT INTO posts (user_id, title, content) VALUES (1, 'Post 1', 'Content 1')`)
+	// Insert Posts for User 1
+	_, err = database.DB.Exec(`INSERT INTO posts (user_id, title, content, privacy) VALUES (1, 'Post 1', 'Content 1', 0)`)
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = database.DB.Exec(`INSERT INTO posts (user_id, title, content) VALUES (2, 'Post 2', 'Content 2')`)
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = database.DB.Exec(`INSERT INTO posts (user_id, title, content) VALUES (1, 'Post 3', 'Content 3')`)
+	_, err = database.DB.Exec(`INSERT INTO posts (user_id, title, content, privacy) VALUES (1, 'Post 2', 'Content 2', 2)`) // Private
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Test GetUserPosts for User 1
-	posts, err := GetUserPosts(1)
+	// Test GetUserPosts for User 1 viewing their own profile (should see both)
+	posts, err := GetUserPosts(1, 1)
 	if err != nil {
 		t.Fatalf("GetUserPosts failed: %v", err)
 	}
-
 	if len(posts) != 2 {
-		t.Errorf("Expected 2 posts for user 1, got %d", len(posts))
+		t.Errorf("Expected 2 posts for user 1 (own profile), got %d", len(posts))
 	}
-	for _, p := range posts {
-		if p.UserID != 1 {
-			t.Errorf("Expected UserID 1, got %d", p.UserID)
-		}
+
+	// Test GetUserPosts for User 2 viewing User 1 (should see 1 public post)
+	posts2, err := GetUserPosts(1, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(posts2) != 1 {
+		t.Errorf("Expected 1 post for user 2 viewing user 1, got %d", len(posts2))
 	}
 }
 

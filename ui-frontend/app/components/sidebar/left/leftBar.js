@@ -1,10 +1,14 @@
 "use client";
 
 import styles from "./leftBar.module.css";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "../../../../context/AuthContext";
-import { useState } from "react";
+import { useToast } from "../../../../context/ToastContext";
+import { useState, useEffect } from "react";
+import { apiFetch } from "../../../../lib/api";
 import CreatePostModal from "../../post/create/CreatePostModal";
+import CreateGroupModal from "../../groups/CreateGroupModal";
+import CreateEventModal from "../../events/CreateEventModal";
 
 import {
   Plus,
@@ -12,13 +16,54 @@ import {
   UserRound,
   UsersRound,
   MessageCircle,
+  Settings,
   LogOut,
 } from "lucide-react";
 
 export default function LeftBar() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user } = useAuth();
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const { addToast } = useToast();
+  
+  const [showCreatePostModal, setShowCreatePostModal] = useState(false);
+  const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
+  const [showCreateEventModal, setShowCreateEventModal] = useState(false);
+  const [showGroupChoice, setShowGroupChoice] = useState(false);
+  const [targetGroupId, setTargetGroupId] = useState(null);
+  const [isGroupMember, setIsGroupMember] = useState(false);
+
+  useEffect(() => {
+    // Reset state when path changes
+    setShowGroupChoice(false);
+    setTargetGroupId(null);
+    setIsGroupMember(false);
+
+    if (pathname && pathname.startsWith("/groups/")) {
+        const parts = pathname.split("/");
+        // Path is like /groups/123. parts[0]='', parts[1]='groups', parts[2]='123'
+        const gid = parts[2]; 
+        if (gid && !isNaN(gid)) {
+            setTargetGroupId(gid);
+            fetchGroupMembership(gid);
+        }
+    }
+  }, [pathname, user]);
+
+  const fetchGroupMembership = async (gid) => {
+    if (!user) return;
+    try {
+       const res = await apiFetch(`/Get_Group_By_ID?id=${gid}`);
+       if (res.ok) {
+         const data = await res.json();
+         if (data.group?.is_member) {
+            setIsGroupMember(true);
+         }
+       }
+    } catch (e) {
+      console.error("Failed to check membership", e);
+    }
+  };
 
   const navigateTo = (endpoint) => {
     router.push(endpoint);
@@ -35,12 +80,45 @@ export default function LeftBar() {
         navigateTo("/");
       } else {
         const err = await res.text();
-        alert("Logout failed: " + err);
+        addToast("Logout failed: " + err, "error");
       }
     } catch (err) {
       console.error("Logout error:", err);
+      addToast("Logout error occurred", "error");
     }
     
+  };
+
+  const handleCreateButtonClick = () => {
+    if (pathname === "/groups") {
+        setShowGroupChoice(!showGroupChoice);
+    } else if (targetGroupId) {
+        // We are on a group page
+        setShowGroupChoice(!showGroupChoice);
+    } else {
+        // Normal post
+        setShowCreatePostModal(true);
+    }
+  };
+
+  const handleGroupPostClick = (e) => {
+    e.stopPropagation();
+    if (isGroupMember) {
+        setShowCreatePostModal(true);
+    } else {
+        addToast("You must be a member of this group to post.", "error");
+    }
+    setShowGroupChoice(false);
+  };
+
+  const handleGroupEventClick = (e) => {
+    e.stopPropagation();
+    if (isGroupMember) {
+        setShowCreateEventModal(true);
+    } else {
+        addToast("You must be a member of this group to create events.", "error");
+    }
+    setShowGroupChoice(false);
   };
 
   return (
@@ -81,6 +159,9 @@ export default function LeftBar() {
         </div>
 
         <div className={styles.bottomSection}>
+          <a className={styles.menuItem} onClick={() => navigateTo("/settings")}>
+            <Settings />
+          </a>
           <a className={styles.menuItem}
             onClick={() => handleLogout()}
           >
@@ -88,25 +169,75 @@ export default function LeftBar() {
             <LogOut />
           </a>
 
-          <div className={styles.createButton} onClick={() => setShowCreateModal(true)}>
+          <div className={styles.createButton} onClick={handleCreateButtonClick}>
             <span className={styles.plusIcon}>
               <Plus />
             </span>
           </div>
+          
+          {/* Choice Pill for Group Page */}
+          {showGroupChoice && (
+            <div className={styles.choicePill}>
+              {pathname === "/groups" ? (
+                <button onClick={(e) => {
+                    e.stopPropagation();
+                    setShowCreateGroupModal(true);
+                    setShowGroupChoice(false);
+                }}>
+                    Create Group
+                </button>
+              ) : (
+                <>
+                    <button onClick={handleGroupPostClick}>
+                        Post
+                    </button>
+                    <div className={styles.divider}></div>
+                    <button onClick={handleGroupEventClick}>
+                        Event
+                    </button>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
-      {showCreateModal && (
+
+      {showCreatePostModal && (
         <CreatePostModal
-          onClose={() => setShowCreateModal(false)}
+          groupId={targetGroupId}
+          onClose={() => {
+            setShowCreatePostModal(false);
+          }}
           onSuccess={() => {
-            setShowCreateModal(false);
-            if (window.location.pathname === "/") {
-              window.location.reload();
-            } else {
-              navigateTo("/");
-            }
+            setShowCreatePostModal(false);
+            window.location.reload();
           }}
         />
+      )}
+      
+      {showCreateGroupModal && (
+          <CreateGroupModal 
+            isOpen={showCreateGroupModal}
+            onClose={() => setShowCreateGroupModal(false)}
+            onSuccess={() => {
+                setShowCreateGroupModal(false);
+                window.location.reload();
+            }}
+          />
+      )}
+
+      {showCreateEventModal && targetGroupId && (
+          <CreateEventModal
+            groupId={targetGroupId}
+            isOpen={showCreateEventModal}
+            onClose={() => {
+                setShowCreateEventModal(false);
+            }}
+            onSuccess={() => {
+                setShowCreateEventModal(false);
+                window.location.reload();
+            }}
+          />
       )}
     </aside>
   );

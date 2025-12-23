@@ -6,8 +6,7 @@ import (
 	"social-network/pkg/database"
 )
 
-// Queries
-const (
+var (
 	SELECT_USER_COUNT_BY_USERNAME_EMAIL      = `SELECT COUNT(*) FROM users WHERE username = ? OR email = ?`
 	SELECT_USERID_PASSHASH_BY_USERNAME_EMAIL = `SELECT id,password_hash FROM users WHERE username = ? OR email = ?`
 	INSERT_USERNAME_EMAIL_PASSHASH           = `
