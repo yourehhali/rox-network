@@ -60,7 +60,7 @@ Based on the codebase analysis and standard Social Network requirements.
 
 ### Infrastructure
 - [x] SQLite Database
-- [x] Database Migrations (`schema.sql`)
+- [x] Database Migrations (golang-migrate with separate files)
 - [ ] **Dockerization** (Missing Dockerfiles & docker-compose.yml)
 - [ ] **CI/CD** (No workflow files)
 
