@@ -16,7 +16,6 @@ ARG SERVICE_NAME
 # Build the binary
 # We find the main.go file. Most services are in services/<name>/cmd/api/main.go
 # api-gateway is in api-gateway/cmd/api/main.go
-# verification is in verification/main.go (if used)
 # We will use a shell script logic or just rely on the path convention passed in ARG
 # Convention: SERVICE_NAME should be the directory name in services/ or api-gateway
 
