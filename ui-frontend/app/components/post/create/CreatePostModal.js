@@ -142,13 +142,26 @@ export default function CreatePostModal({ onClose, onSuccess, groupId = null }) 
           
           <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
             <label style={{ color: "#aaa", fontSize: "0.9rem" }}>Upload Image (optional)</label>
-            <input
+            <div className={styles.fileInputWrapper}>
+              <input
                 type="file"
+                id="post-image-upload"
                 accept="image/*"
                 onChange={handleImageChange}
                 className={styles.fileInput}
               />
+              <label htmlFor="post-image-upload" className={styles.fileLabel}>
+                {image ? (
+                  <div className={styles.filePreview}>
+                    <span className={styles.fileName}>{image.name}</span>
+                    <span className={styles.changeFile}>Change</span>
+                  </div>
+                ) : (
+                  <span className={styles.placeholder}>Click to upload image</span>
+                )}
+              </label>
             </div>
+          </div>
 
             {!groupId && (
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>

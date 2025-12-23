@@ -122,13 +122,18 @@ export default function SettingsPage() {
               alt="Avatar Preview"
               className={styles.avatarPreview}
             />
-            <input
-              type="file"
-              onChange={handleFileChange}
-              accept="image/*"
-              className={styles.input}
-              style={{ width: "auto" }}
-            />
+            <div className={styles.fileInputWrapper}>
+              <input
+                type="file"
+                id="avatar-upload"
+                onChange={handleFileChange}
+                accept="image/*"
+                className={styles.fileInput}
+              />
+              <label htmlFor="avatar-upload" className={styles.fileLabel}>
+                <span className={styles.changeFile}>Change Avatar</span>
+              </label>
+            </div>
           </div>
 
           <div className={styles.inputGroup}>
