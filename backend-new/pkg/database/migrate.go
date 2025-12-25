@@ -5,26 +5,31 @@ import (
 	"fmt"
 	"log"
 
-	migrate "github.com/rubenv/sql-migrate"
+	"github.com/golang-migrate/migrate"
+	"github.com/golang-migrate/migrate/database/sqlite3"
+	_ "github.com/golang-migrate/migrate/source/file"
 )
 
 // RunMigrations applies all up migrations to the database
 func RunMigrations(db *sql.DB, migrationsPath string) error {
-	migrations := &migrate.FileMigrationSource{
-		Dir: migrationsPath,
+	driver, err := sqlite3.WithInstance(db, &sqlite3.Config{})
+	if err != nil {
+		return fmt.Errorf("could not create sqlite3 driver: %w", err)
 	}
 
-	// Apply migrations
-	n, err := migrate.Exec(db, "sqlite3", migrations, migrate.Up)
+	m, err := migrate.NewWithDatabaseInstance(
+		"file://"+migrationsPath,
+		"sqlite3",
+		driver,
+	)
 	if err != nil {
+		return fmt.Errorf("could not create migrate instance: %w", err)
+	}
+
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
 		return fmt.Errorf("could not apply migrations: %w", err)
 	}
 
-	if n > 0 {
-		log.Printf("Applied %d migrations!\n", n)
-	} else {
-		log.Println("No new migrations to apply.")
-	}
-
+	log.Println("Migrations applied successfully!")
 	return nil
 }

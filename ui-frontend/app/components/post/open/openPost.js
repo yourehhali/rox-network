@@ -1,12 +1,18 @@
 import style from "./openPost.module.css";
-import { X, Heart, ThumbsDown, Image as ImageIcon } from "lucide-react";
+import { X, Heart, ThumbsDown, Image as ImageIcon } from "../../icons";
 import { useState, useEffect, useRef } from "react";
 import { apiFetch, toMediaUrl } from "../../../../lib/api";
 import { useAuth } from "../../../../context/AuthContext";
 
-export default function OpenPost({ postId: propPostId, onClose, postData }) {
+export default function OpenPost({ postId: propPostId, onClose, postData, endpoints }) {
   const { user } = useAuth();
   const postId = propPostId || postData?.id;
+  
+  // Default endpoints
+  const commentsUrl = endpoints?.comments || `/posts/${postId}/comments`;
+  const submitCommentUrl = endpoints?.submitComment || `/posts/${postId}/comments`;
+  const submitReactionUrl = endpoints?.submitReaction || "/reactions";
+
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
   const [bgClass, setBgClass] = useState("");
@@ -120,9 +126,22 @@ export default function OpenPost({ postId: propPostId, onClose, postData }) {
     setUserReaction(newReaction);
 
     try {
-        const res = await apiFetch("/reactions", {
+        if (!submitReactionUrl) return;
+
+        const body = { reaction: type };
+        if (endpoints?.submitReaction) {
+            body.group_post_id = postId; // Assuming group post endpoint expects this
+            // Or if generic, we might need to adjust body structure based on endpoint
+            // For now, let's assume the endpoint handles "post_id" or we pass "post_id"
+            // If it's a group post, we might want to send "post_id" as the ID.
+            body.post_id = postId; 
+        } else {
+             body.post_id = postId;
+        }
+
+        const res = await apiFetch(submitReactionUrl, {
             method: "POST",
-            body: JSON.stringify({ post_id: postId, reaction: type })
+            body: JSON.stringify(body)
         });
         if (res.ok) {
             const data = await res.json();

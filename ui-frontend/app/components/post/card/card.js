@@ -1,5 +1,5 @@
 import style from "./card.module.css";
-import { Eye } from "lucide-react";
+import { Eye } from "../../icons";
 
 
 const grads = ["bg-1", "bg-2", "bg-3", "bg-4", "bg-5"];

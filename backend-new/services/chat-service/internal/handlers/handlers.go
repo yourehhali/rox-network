@@ -207,15 +207,19 @@ func NotificationWebSocket(w http.ResponseWriter, r *http.Request) {
 func HandleInternalNotification(w http.ResponseWriter, r *http.Request) {
 	var n models.Notification
 	if err := json.NewDecoder(r.Body).Decode(&n); err != nil {
-		log.Printf("DEBUG: Invalid JSON in HandleInternalNotification: %v", err)
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 
-	log.Printf("DEBUG: Chat Service Received Notification: %+v", n)
-
 	// If type is notification_removed, just broadcast and return (don't save to DB)
 	if n.Type == "notification_removed" {
+		// Also remove from DB
+		if n.ID != 0 {
+			_ = repository.DeleteNotificationByID(n.ID)
+		} else if n.Message != "" && n.GroupID != 0 {
+			_ = repository.DeleteNotificationByType(n.UserID, n.SenderID, n.GroupID, n.Message)
+		}
+
 		for _, conn := range repository.GetNotificationClients(n.UserID) {
 			conn.WriteJSON(n)
 		}

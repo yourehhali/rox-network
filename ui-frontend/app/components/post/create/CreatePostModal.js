@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
-import { apiFetch, toMediaUrl } from "../../../../lib/api";
+import { apiFetch } from "../../../../lib/api";
 import styles from "./CreatePostModal.module.css";
-import { X } from "lucide-react";
+import { X } from "../../icons";
 import { useAuth } from "../../../../context/AuthContext";
 
 export default function CreatePostModal({ onClose, onSuccess, groupId = null }) {

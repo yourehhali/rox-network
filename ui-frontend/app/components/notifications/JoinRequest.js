@@ -11,8 +11,9 @@ export default function JoinRequest({ notification, onHandled }) {
       const res = await apiFetch("/accept-reject-join", {
         method: "POST",
         body: JSON.stringify({
+          notif_id: notification.id,
           group_id: notification.group_id,
-          user_id: notification.sender_id, // The user requesting join
+          user_id: notification.sender?.id, // The user requesting join
           action: action, // 'accept' or 'reject'
         }),
       });

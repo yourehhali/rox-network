@@ -2,8 +2,8 @@
 import styles from "./page.module.css";
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
-import Link from "next/link";
 import CreateGroupModal from "@/app/components/groups/CreateGroupModal";
+import GroupCard from "@/app/components/groups/GroupCard";
 
 export default function GroupsPage() {
   const [groups, setGroups] = useState([]);
@@ -35,14 +35,7 @@ export default function GroupsPage() {
       ) : (
         <div className={styles.grid}>
           {groups.map((g) => (
-            <Link key={g.id} href={`/groups/${g.id}`} className={styles.cardLink}>
-              <div className={styles.card}>
-                <div className={styles.cardTitle}>
-                  {g.title || g.name || `Group ${g.id}`}
-                </div>
-                <div className={styles.cardDesc}>{g.description || ""}</div>
-              </div>
-            </Link>
+            <GroupCard key={g.id} group={g} />
           ))}
         </div>
       )}

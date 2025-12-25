@@ -12,6 +12,7 @@ export default function EventNotification({ notification, onHandled }) {
         method: "POST",
         body: JSON.stringify({
           event_id: notification.event_id,
+          notif_id: notification.id,
           status: action, // 'going' or 'not_going'
         }),
       });

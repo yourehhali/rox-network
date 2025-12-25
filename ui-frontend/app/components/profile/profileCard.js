@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { apiFetch, toMediaUrl } from "../../../lib/api";
 import { useAuth } from "../../../context/AuthContext";
-import { Mail,Cake,User } from "lucide-react";
+import { Mail,Cake,User } from "../icons";
 import UserListModal from "./userListModal";
-
+import InviteGroupModal from "./InviteGroupModal";
 export default function ProfileCard() {
   const params = useSearchParams();
   const { user } = useAuth();
@@ -17,6 +17,7 @@ export default function ProfileCard() {
     pending: false,
   });
   const [modalType, setModalType] = useState(null);
+  const [isPrivate, setIsPrivate] = useState(false);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -46,6 +47,7 @@ export default function ProfileCard() {
           followers: data.followers_count || 0,
           following: data.following_count || 0,
         });
+        setIsPrivate(!!u.is_private);
         setFollowState({ following: !!data.isfriend, pending: !!data.p });
       } catch (e) {
         // ignore
@@ -76,6 +78,21 @@ export default function ProfileCard() {
       );
     } catch (e) {
       // ignore
+    }
+  };
+
+  const handlePrivacyToggle = async () => {
+    const newVal = !isPrivate;
+    try {
+        const res = await apiFetch("/update-privacy", {
+            method: "POST",
+            body: JSON.stringify({ is_private: newVal ? 1 : 0 })
+        });
+        if (res.ok) {
+            setIsPrivate(newVal);
+        }
+    } catch(e) {
+        console.error("Failed to update privacy", e);
     }
   };
 
@@ -130,14 +147,32 @@ export default function ProfileCard() {
                 </div>
                 <div className={style.actions}>
                   {!isMyProfile && (
-                    <button
-                      className={`${style.followButton} ${
-                        followState.following ? style.unfollowButton : ""
-                      }`}
-                      onClick={handleToggleFollow}
-                    >
-                      {followLabel}
-                    </button>
+                    <>
+                        <button
+                          className={`${style.followButton} ${
+                            followState.following ? style.unfollowButton : ""
+                          }`}
+                          onClick={handleToggleFollow}
+                        >
+                          {followLabel}
+                        </button>
+                        <button
+                            className={style.followButton}
+                            onClick={() => setModalType("invite")}
+                            style={{ marginLeft: "10px", backgroundColor: "#3498db" }}
+                        >
+                            Invite to Group
+                        </button>
+                    </>
+                  )}
+                  {isMyProfile && (
+                     <button
+                       className={style.followButton}
+                       onClick={handlePrivacyToggle}
+                       style={{ marginLeft: "10px", backgroundColor: isPrivate ? "#e74c3c" : "#2ecc71" }}
+                     >
+                       {isPrivate ? "Private" : "Public"}
+                     </button>
                   )}
                 </div>
               </div>
@@ -176,11 +211,17 @@ export default function ProfileCard() {
           </div>
         </div>
       </div>
-      {modalType && (
+      {modalType && modalType !== "invite" && (
         <UserListModal
           type={modalType}
           userId={profile.id}
           onClose={() => setModalType(null)}
+        />
+      )}
+      {modalType === "invite" && (
+        <InviteGroupModal
+            userId={profile.id}
+            onClose={() => setModalType(null)}
         />
       )}
     </div>

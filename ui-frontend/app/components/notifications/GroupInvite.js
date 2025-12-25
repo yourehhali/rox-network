@@ -12,6 +12,7 @@ export default function GroupInvite({ notification, onHandled }) {
         method: "POST",
         body: JSON.stringify({
           group_id: notification.group_id,
+          notif_id: notification.id,
           status: action, // 'accept' or 'reject'
         }),
       });

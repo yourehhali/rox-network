@@ -3,6 +3,7 @@
 import styles from "./leftBar.module.css";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "../../../../context/AuthContext";
+import { usePosts } from "../../../../context/PostsContext";
 import { useToast } from "../../../../context/ToastContext";
 import { useState, useEffect } from "react";
 import { apiFetch } from "../../../../lib/api";
@@ -18,13 +19,14 @@ import {
   MessageCircle,
   Settings,
   LogOut,
-} from "lucide-react";
+} from "../../icons";
 
 export default function LeftBar() {
   const router = useRouter();
   const pathname = usePathname();
   const { user } = useAuth();
   const { addToast } = useToast();
+  const { triggerFeedRefresh } = usePosts();
   
   const [showCreatePostModal, setShowCreatePostModal] = useState(false);
   const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
@@ -210,7 +212,8 @@ export default function LeftBar() {
           }}
           onSuccess={() => {
             setShowCreatePostModal(false);
-            window.location.reload();
+            addToast("Post created successfully!", "success");
+            triggerFeedRefresh();
           }}
         />
       )}
@@ -221,7 +224,7 @@ export default function LeftBar() {
             onClose={() => setShowCreateGroupModal(false)}
             onSuccess={() => {
                 setShowCreateGroupModal(false);
-                window.location.reload();
+                addToast("Group created successfully!", "success");
             }}
           />
       )}
@@ -235,7 +238,8 @@ export default function LeftBar() {
             }}
             onSuccess={() => {
                 setShowCreateEventModal(false);
-                window.location.reload();
+                addToast("Event created successfully!", "success");
+                triggerFeedRefresh();
             }}
           />
       )}

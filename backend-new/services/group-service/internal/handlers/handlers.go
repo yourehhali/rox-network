@@ -11,6 +11,7 @@ import (
 	"social-network/pkg/middleware"
 	"social-network/pkg/models"
 	sharedRepo "social-network/pkg/repository"
+	"social-network/pkg/utils"
 	"strconv"
 	"strings"
 	"time"
@@ -18,15 +19,12 @@ import (
 
 // Helper to send notification to chat-service
 func sendNotification(n models.Notification) {
-	fmt.Printf("DEBUG: Sending notification: %+v\n", n)
 	data, _ := json.Marshal(n)
 	resp, err := http.Post("http://localhost:8085/internal/notification", "application/json", bytes.NewBuffer(data))
 	if err != nil {
-		fmt.Printf("DEBUG: Error sending notification: %v\n", err)
 		return
 	}
 	defer resp.Body.Close()
-	fmt.Println("DEBUG: Notification sent successfully")
 }
 
 // CreateGroup handles group creation
@@ -53,7 +51,7 @@ func CreateGroup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := repository.InsertGroupMember(int(groupID), userID, "member"); err != nil {
-		fmt.Printf("Error adding creator as member: %v\n", err)
+		// Log error but continue as group is created
 	}
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{"id": groupID, "status": "created"})
@@ -93,7 +91,6 @@ func RequestJoin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if already member or pending
 	groups, _ := repository.GetGroups(userID)
 	for _, g := range groups {
 		if g.ID == req.GroupID && (g.UserStatus == "member" || g.UserStatus == "requested" || g.UserStatus == "pending") {
@@ -108,17 +105,17 @@ func RequestJoin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Notify Creator
 	group, _ := repository.GetGroupByID(req.GroupID)
 	if group != nil {
 		username, _ := sharedRepo.GetUsernameByID(userID)
 		msg := fmt.Sprintf("The user %s sent a request to join group %s", username, group.Title)
 		sendNotification(models.Notification{
-			UserID:   group.CreatorID,
-			SenderID: userID,
-			Type:     "request_join_group",
-			Message:  msg,
-			GroupID:  req.GroupID,
+			UserID:     group.CreatorID,
+			SenderID:   userID,
+			Type:       "request_join_group",
+			Message:    msg,
+			GroupID:    req.GroupID,
+			GroupTitle: group.Title,
 		})
 	}
 
@@ -168,6 +165,7 @@ func AcceptRejectJoin(w http.ResponseWriter, r *http.Request) {
 
 	// Remove the request notification for the Creator (myself)
 	sendNotification(models.Notification{
+		ID:       req.NotifID, // If available, use this for direct deletion
 		UserID:   userID,
 		Type:     "notification_removed",
 		Message:  "request_join_group",
@@ -188,6 +186,7 @@ func RespondToGroupInvite(w http.ResponseWriter, r *http.Request) {
 
 	var req struct {
 		GroupID int    `json:"group_id"`
+		NotifID int    `json:"notif_id"`
 		Status  string `json:"status"` // 'accept', 'reject'
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -203,6 +202,7 @@ func RespondToGroupInvite(w http.ResponseWriter, r *http.Request) {
 
 	// Remove notification for this user
 	sendNotification(models.Notification{
+		ID:      req.NotifID,
 		UserID:  userID,
 		Type:    "notification_removed",
 		Message: "group_invite",
@@ -299,13 +299,17 @@ func CreateGroupPost(w http.ResponseWriter, r *http.Request) {
 	file, handler, err := r.FormFile("image")
 	if err == nil {
 		defer file.Close()
-		// Save to shared uploads dir? Or media service?
-		// For now, save to local uploads and serve via Media Service?
-		// Better: Forward to Media Service?
-		// Simplest for migration: Save to "../media-service/uploads" relative path?
-		// Or just "uploads/" and ensure Media Service serves it.
-		// For now, save to shared uploads dir
-		uploadDir := "../../uploads"
+
+		if !utils.IsAllowedImageExtension(handler.Filename) {
+			http.Error(w, "Invalid file type. Allowed: .jpg, .jpeg, .png, .gif, .webp", http.StatusBadRequest)
+			return
+		}
+
+		// Use UPLOAD_DIR env var if available
+		uploadDir := os.Getenv("UPLOAD_DIR")
+		if uploadDir == "" {
+			uploadDir = "../../uploads"
+		}
 		os.MkdirAll(uploadDir, 0755)
 		filename := fmt.Sprintf("%d_%s", time.Now().Unix(), handler.Filename)
 		dstPath := fmt.Sprintf("%s/%s", uploadDir, filename)
@@ -350,7 +354,10 @@ func FetchNotMembers(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		UserID int `json:"user_id"` // Target user to invite
 	}
-	json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
 
 	groups, err := repository.GetGroupsForInvite(userID, req.UserID)
 	if err != nil {
@@ -372,10 +379,27 @@ func InviteToGroup(w http.ResponseWriter, r *http.Request) {
 		GroupID int `json:"group_id"`
 		UserID  int `json:"user_id"` // User to invite
 	}
-	json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+
+	if req.GroupID <= 0 || req.UserID <= 0 {
+		http.Error(w, "Invalid group or user ID", http.StatusBadRequest)
+		return
+	}
 
 	// Check if already member? (GetGroupsForInvite handles this logic partly, but safe to check)
-	repository.InsertGroupMember(req.GroupID, req.UserID, "invited")
+	err := repository.InsertGroupMember(req.GroupID, req.UserID, "invited")
+	if err != nil {
+		if strings.Contains(err.Error(), "constraint") {
+			// Already member or invited, treat as success
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		http.Error(w, "Server error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	// Notify Invitee
 	group, _ := repository.GetGroupByID(req.GroupID)
@@ -407,7 +431,25 @@ func CreateEvent(w http.ResponseWriter, r *http.Request) {
 		Description string `json:"description"`
 		EventTime   string `json:"event_time"`
 	}
-	json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Validate Event Time (must be > 24 hours from now)
+	parsedTime, err := time.Parse("2006-01-02T15:04", req.EventTime)
+	if err != nil {
+		// Try RFC3339 fallback
+		parsedTime, err = time.Parse(time.RFC3339, req.EventTime)
+		if err != nil {
+			http.Error(w, "Invalid event time format", http.StatusBadRequest)
+			return
+		}
+	}
+	if parsedTime.Before(time.Now().Add(24 * time.Hour)) {
+		http.Error(w, "Event must be at least 24 hours from now", http.StatusBadRequest)
+		return
+	}
 
 	// Check Membership
 	isMember, err := repository.CheckGroupMembership(req.GroupID, userID)
@@ -475,9 +517,13 @@ func RespondToEvent(w http.ResponseWriter, r *http.Request) {
 
 	var req struct {
 		EventID int    `json:"event_id"`
+		NotifID int    `json:"notif_id"`
 		Status  string `json:"status"` // 'going', 'not_going'
 	}
-	json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
 
 	err := repository.UpdateEventMemberStatus(req.EventID, userID, req.Status)
 	if err != nil {
@@ -487,6 +533,7 @@ func RespondToEvent(w http.ResponseWriter, r *http.Request) {
 
 	// Remove "event_created" notification for this event
 	sendNotification(models.Notification{
+		ID:      req.NotifID,
 		UserID:  userID,
 		Type:    "notification_removed",
 		Message: "event_created",

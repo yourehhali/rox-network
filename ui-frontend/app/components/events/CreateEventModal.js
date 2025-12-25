@@ -22,7 +22,7 @@ export default function CreateEventModal({ groupId, onSuccess, onClose }) {
       const res = await apiFetch("/create_event", {
         method: "POST",
         body: JSON.stringify({
-          group_id: groupId,
+          group_id: parseInt(groupId, 10),
           title,
           description: desc,
           event_time: eventTime,
@@ -67,6 +67,7 @@ export default function CreateEventModal({ groupId, onSuccess, onClose }) {
             value={eventTime}
             onChange={(e) => setEventTime(e.target.value)}
             required
+            min={new Date(Date.now() + 86400000).toISOString().slice(0, 16)}
             className={styles.input}
           />
           <div className={styles.buttons}>

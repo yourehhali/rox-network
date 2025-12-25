@@ -3,25 +3,22 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { apiFetch } from "@/lib/api";
 import styles from "./page.module.css";
-import CreateEventModal from "@/app/components/events/CreateEventModal";
+import PostsFeed from "@/app/components/feeds/posts/feed";
+import EventsFeed from "@/app/components/feeds/events/EventsFeed";
+import MemberCard from "@/app/components/groups/MemberCard";
+import { usePosts } from "@/context/PostsContext";
 
 export default function GroupPage() {
   const params = useParams();
   const id = parseInt(params.id, 10);
+  const { refreshTrigger } = usePosts();
   
   const [group, setGroup] = useState(null);
   const [members, setMembers] = useState([]);
-  const [posts, setPosts] = useState([]);
-  const [events, setEvents] = useState([]);
   
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("posts");
-  const [showEventModal, setShowEventModal] = useState(false);
   const [joinState, setJoinState] = useState(null);
-
-  // New Post State
-  const [postTitle, setPostTitle] = useState("");
-  const [postContent, setPostContent] = useState("");
 
   const loadGroupData = async () => {
     try {
@@ -34,23 +31,6 @@ export default function GroupPage() {
         setMembers(data.members || []);
         if (data.group?.is_member) setJoinState("member");
       }
-
-      // 2. Posts
-      const pRes = await apiFetch(`/GetGroupPosts?id=${id}`);
-      if (pRes.ok) {
-        const p = await pRes.json();
-        setPosts(Array.isArray(p) ? p : []);
-      }
-
-      // 3. Events
-      const eRes = await apiFetch(`/group-events`, {
-        method: "POST",
-        body: JSON.stringify({ group_id: id }),
-      });
-      if (eRes.ok) {
-        const e = await eRes.json();
-        setEvents(Array.isArray(e) ? e : []);
-      }
     } catch (e) {
       console.error(e);
     }
@@ -59,7 +39,7 @@ export default function GroupPage() {
 
   useEffect(() => {
     if (id) loadGroupData();
-  }, [id]);
+  }, [id, refreshTrigger]);
 
   const join = async () => {
     try {
@@ -72,41 +52,6 @@ export default function GroupPage() {
         setJoinState(data.status || "requested");
         loadGroupData(); // Refresh to update member status
       }
-    } catch (_) {}
-  };
-
-  const createPost = async (e) => {
-    e.preventDefault();
-    if (!postTitle.trim() || !postContent.trim()) return;
-
-    try {
-      const formData = new FormData();
-      formData.append("title", postTitle);
-      formData.append("content", postContent);
-      formData.append("group_id", id);
-      
-      const res = await apiFetch("/CreateGroupPost", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (res.ok) {
-          setPostTitle("");
-          setPostContent("");
-          loadGroupData();
-      }
-    } catch (err) {
-       console.error(err);
-    }
-  };
-
-  const handleEventResponse = async (eventId, status) => {
-    try {
-      await apiFetch("/event-invite-response", {
-        method: "POST",
-        body: JSON.stringify({ event_id: eventId, status }),
-      });
-      loadGroupData(); // Reload to see updated status
     } catch (_) {}
   };
 
@@ -127,12 +72,6 @@ export default function GroupPage() {
                 <button onClick={join} className={styles.joinBtn}>
                   {joinState ? `Status: ${joinState}` : "Join Group"}
                 </button>
-              )}
-              
-              {joinState === "member" && (
-                  <button onClick={() => setShowEventModal(true)} className={styles.actionBtn}>
-                      + Create Event
-                  </button>
               )}
             </div>
           </div>
@@ -163,79 +102,35 @@ export default function GroupPage() {
           <div className={styles.content}>
             {activeTab === "posts" && (
               <div>
-                 {joinState === "member" && (
-                   <form onSubmit={createPost} className={styles.createPostForm}>
-                     <input 
-                       type="text" 
-                       placeholder="Post Title" 
-                       value={postTitle} 
-                       onChange={e => setPostTitle(e.target.value)}
-                       className={styles.postInput}
-                     />
-                     <textarea 
-                       placeholder="What's on your mind?" 
-                       value={postContent} 
-                       onChange={e => setPostContent(e.target.value)}
-                       className={styles.postTextarea}
-                     />
-                     <button type="submit" className={styles.postBtn}>Post</button>
-                   </form>
-                 )}
-                 
                  <div className={styles.postsList}>
-                   {posts.map(p => (
-                     <div key={p.id} className={styles.postCard}>
-                       <h3>{p.title}</h3>
-                       <p>{p.content}</p>
-                       <small>By {p.author_id} on {new Date(p.created_at).toLocaleDateString()}</small>
-                     </div>
-                   ))}
-                   {posts.length === 0 && <p>No posts yet.</p>}
+                    <PostsFeed 
+                        groupId={id}
+                        endpoints={{
+                            comments: null,
+                            submitComment: null,
+                            submitReaction: null
+                        }}
+                    />
                  </div>
               </div>
             )}
 
             {activeTab === "events" && (
               <div className={styles.eventsList}>
-                {events.map(ev => (
-                  <div key={ev.id} className={styles.eventCard}>
-                    <h3>{ev.title}</h3>
-                    <p>{ev.description}</p>
-                    <p>Date: {new Date(ev.date).toLocaleDateString()}</p>
-                    {/* Event actions like Going/Not Going could be here */}
-                    <div className={styles.eventActions}>
-                      <button onClick={() => handleEventResponse(ev.id, "going")}>Going</button>
-                      <button onClick={() => handleEventResponse(ev.id, "not_going")}>Not Going</button>
-                    </div>
-                  </div>
-                ))}
-                {events.length === 0 && <p>No events found.</p>}
+                <EventsFeed groupId={id} />
               </div>
             )}
 
             {activeTab === "members" && (
               <div className={styles.membersList}>
                 {members.map(m => (
-                  <div key={m.id} className={styles.memberCard}>
-                     {m.first_name} {m.last_name} ({m.nickname})
-                  </div>
+                  <MemberCard key={m.id} member={m} />
                 ))}
                 {members.length === 0 && <p>No members found.</p>}
               </div>
             )}
           </div>
         </>
-      )}
-
-      {showEventModal && (
-        <CreateEventModal 
-          groupId={id} 
-          onClose={() => setShowEventModal(false)} 
-          onSuccess={() => {
-            setShowEventModal(false);
-            loadGroupData();
-          }}
-        />
       )}
     </div>
   );

@@ -1,9 +1,10 @@
 package utils
 
 import (
-	"fmt"
+	"log"
+	"path/filepath"
 	"regexp"
-	"time"
+	"strings"
 )
 
 // Constants moved from repository/global.go
@@ -37,17 +38,17 @@ func InitRegex() {
 	var err error
 	EmailExp, err = regexp.Compile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]+`)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return
 	}
 	UsernameExp, err = regexp.Compile(`^[a-zA-Z]+[a-zA-Z0-9._]+`)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return
 	}
 	NameExp, err = regexp.Compile(`^[a-zA-Z][a-zA-Z\s\-\']*$`)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return
 	}
 }
@@ -99,15 +100,11 @@ func ValidPostTitle(title string) bool {
 	return len(title) >= TITLE_MIN_LEN && len(title) <= TITLE_MAX_LEN
 }
 
-func SqlDateFormater(date string) string {
-	today := time.Now().Format("2006-01-02")
-	if len(date) != 20 {
-		return "date error"
+func IsAllowedImageExtension(filename string) bool {
+	ext := strings.ToLower(filepath.Ext(filename))
+	switch ext {
+	case ".jpg", ".jpeg", ".png", ".gif", ".webp":
+		return true
 	}
-	tmp := date[:10]
-	if tmp == today {
-		tmp = "today"
-		tmp = date[11:16]
-	}
-	return tmp
+	return false
 }

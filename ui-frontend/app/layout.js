@@ -2,6 +2,7 @@ import "./globals.css";
 import { AuthProvider } from '../context/AuthContext';
 import { ToastProvider } from '../context/ToastContext';
 import { ChatProvider } from '../context/ChatContext';
+import { PostsProvider } from '../context/PostsContext';
 
 export const metadata = {
   title: "Social UI Update",
@@ -14,9 +15,11 @@ export default function RootLayout({ children }) {
       <body>
         <ToastProvider>
           <AuthProvider>
-            <ChatProvider>
-              {children}
-            </ChatProvider>
+            <PostsProvider>
+              <ChatProvider>
+                {children}
+              </ChatProvider>
+            </PostsProvider>
           </AuthProvider>
         </ToastProvider>
       </body>

@@ -10,6 +10,7 @@ import (
 	"post-service/internal/repository"
 	"social-network/pkg/database"
 	"social-network/pkg/middleware"
+	"social-network/pkg/utils"
 	"strconv"
 	"strings"
 	"time"
@@ -47,9 +48,18 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	file, handler, err := r.FormFile("image")
 	if err == nil {
 		defer file.Close()
+
+		if !utils.IsAllowedImageExtension(handler.Filename) {
+			http.Error(w, "Invalid file type. Allowed: .jpg, .jpeg, .png, .gif, .webp", http.StatusBadRequest)
+			return
+		}
+
 		// Using relative path for migration simplicity.
 		// Ensure uploads directory exists.
-		uploadDir := "../../uploads"
+		uploadDir := os.Getenv("UPLOAD_DIR")
+		if uploadDir == "" {
+			uploadDir = "../../uploads"
+		}
 		if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
 			os.MkdirAll(uploadDir, 0755)
 		}
@@ -60,7 +70,6 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 
 		f, err := os.Create(fullPath)
 		if err != nil {
-			fmt.Println("Error creating file:", err)
 			http.Error(w, "Cannot save image", http.StatusInternalServerError)
 			return
 		}
@@ -71,7 +80,6 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	ID, err := repository.AddNewPost(userID, title, content, imagePath, privacy, allowedUsers)
 	if err != nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)
-		fmt.Println("There is a problem in the database:", err)
 		return
 	}
 
@@ -79,7 +87,6 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(post); err != nil {
-		fmt.Println("Error encoding post:", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -99,13 +106,11 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 	posts, err := repository.GetAllPosts(userID)
 
 	if err != nil {
-		fmt.Println("There is a problem in get posts:", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(posts); err != nil {
-		fmt.Println("Error encoding posts:", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -136,14 +141,12 @@ func GetPostsByUser(w http.ResponseWriter, r *http.Request) {
 
 	posts, err := repository.GetUserPosts(userID, viewerID)
 	if err != nil {
-		fmt.Println("Error getting user posts:", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(posts); err != nil {
-		fmt.Println("Error encoding posts:", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -241,7 +244,16 @@ func SubmitComment(w http.ResponseWriter, r *http.Request) {
 			file, handler, err := r.FormFile("image")
 			if err == nil {
 				defer file.Close()
-				uploadDir := "../../uploads"
+
+				if !utils.IsAllowedImageExtension(handler.Filename) {
+					http.Error(w, "Invalid file type. Allowed: .jpg, .jpeg, .png, .gif, .webp", http.StatusBadRequest)
+					return
+				}
+
+				uploadDir := os.Getenv("UPLOAD_DIR")
+				if uploadDir == "" {
+					uploadDir = "../../uploads"
+				}
 				if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
 					os.MkdirAll(uploadDir, 0755)
 				}

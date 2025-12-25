@@ -2,7 +2,7 @@
 
 import style from "./widget.module.css";
 import { useRouter } from "next/navigation";
-import { Bell } from "lucide-react";
+import { Bell } from "../../../icons";
 import { useEffect, useRef, useState } from "react";
 import { apiFetch, toMediaUrl } from "../../../../../lib/api";
 import FollowRequest from "../../../notifications/followRequest";
@@ -29,7 +29,20 @@ export default function Widget() {
         const res = await apiFetch("/notifications");
         if (res.ok) {
           const data = await res.json();
-          setNotifications(Array.isArray(data) ? data : []);
+          if (Array.isArray(data)) {
+            // Deduplicate by ID
+            const unique = [];
+            const ids = new Set();
+            data.forEach(n => {
+              if (!ids.has(n.id)) {
+                ids.add(n.id);
+                unique.push(n);
+              }
+            });
+            setNotifications(unique);
+          } else {
+            setNotifications([]);
+          }
         }
       } catch (_) {}
     };
@@ -70,8 +83,16 @@ export default function Widget() {
              return;
         }
 
-        // Add new notification
-        setNotifications((prev) => [notif, ...prev]);
+        // Add new notification, preventing duplicates
+        setNotifications((prev) => {
+            // Check if already exists by ID
+            if (prev.some(n => n.id === notif.id)) {
+                return prev;
+            }
+            // Also check if logically same (same type, sender, group/event) to be safe
+            // But ID check should suffice if backend sends ID
+            return [notif, ...prev];
+        });
       } catch (_) {}
     };
     
@@ -110,8 +131,8 @@ export default function Widget() {
         <div className={style.notificationsPanel}>
           {notifications.length === 0 ? (
             <div className={style.notificationItem}>No notifications</div>
-          ) : notifications.map((n) => {
-            const key = n.id || Math.random();
+          ) : notifications.map((n, idx) => {
+            const key = n.id || `notif-${idx}`;
             
             if (n.type === "Invitation_friendships" || n.type === "new_follower") {
               return (

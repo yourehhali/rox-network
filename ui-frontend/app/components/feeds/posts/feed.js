@@ -5,30 +5,78 @@ import OpenPost from "../../post/open/openPost";
 import { useState, useEffect } from 'react';
 import { useSearchParams } from "next/navigation";
 import { apiFetch, toMediaUrl } from '../../../../lib/api';
+import { usePosts } from '../../../../context/PostsContext';
+import { useAuth } from '../../../../context/AuthContext';
 
-export default function PostsFeed({ userId: propUserId }) {
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function PostsFeed({ userId: propUserId, posts: propPosts, endpoints, groupId }) {
+  const [internalPosts, setInternalPosts] = useState([]);
+  const [loading, setLoading] = useState(!propPosts);
   const [selectedPost, setSelectedPost] = useState(null);
   const params = useSearchParams();
+  const { refreshTrigger } = usePosts();
+  const { user } = useAuth();
+  const [locked, setLocked] = useState(false);
+
+  const posts = propPosts || internalPosts;
 
   useEffect(() => {
+    if (propPosts) {
+      setLoading(false);
+      return;
+    }
     const fetchPosts = async () => {
       try {
         const paramId = params?.get?.("id");
         const uid = propUserId || (paramId ? parseInt(paramId, 10) : null);
-        const endpoint = uid ? `/GetCUser/?id=${uid}` : '/getposts';
+        setLocked(false);
+
+        // Profile privacy check for user feeds
+        if (!groupId && uid) {
+          try {
+            const profRes = await apiFetch(`/profile?id=${uid}`);
+            if (profRes.ok) {
+              const profData = await profRes.json();
+              const u = profData.user || profData;
+              const isPrivate = !!u.is_private;
+              const isFriend = !!profData.isfriend;
+              const hasPosts = !!profData.has_posts;
+              const isMyProfile = user && user.id === uid;
+              if (!isMyProfile && isPrivate && !isFriend && hasPosts) {
+                setLocked(true);
+                setInternalPosts([]);
+                return;
+              }
+            }
+          } catch (_) {
+            // ignore privacy check errors; fall through to posts fetch
+          }
+        }
+
+        let endpoint = '/getposts';
+        if (groupId) {
+          endpoint = `/GetGroupPosts?group_id=${groupId}`;
+        } else if (uid) {
+          endpoint = `/GetCUser/?id=${uid}`;
+        }
+
         const res = await apiFetch(endpoint);
         if (res.ok) {
           const data = await res.json();
           const mappedPosts = (data || []).map(post => {
-            const imageUrl = toMediaUrl(post.image_path) || undefined;
+            const imageUrl = toMediaUrl(post.image_path || post.image) || undefined;
             const avatarUrl = toMediaUrl(post.avatar) || "/default-avatar.png";
+            
+            // Handle differences between group post and feed post
+            let content = post.content;
+            if (post.title) {
+              content = `**${post.title}**\n\n${post.content}`;
+            }
+
             return {
               id: post.id,
               author: post.full_name || post.username,
               avatar: avatarUrl,
-              content: post.content,
+              content: content,
               imageUrl,
               ago: new Date(post.created_at).toLocaleDateString(),
               likesCount: post.likes_count || 0,
@@ -36,7 +84,7 @@ export default function PostsFeed({ userId: propUserId }) {
               userReaction: post.userReaction,
             };
           });
-          setPosts(mappedPosts);
+          setInternalPosts(mappedPosts);
         }
       } catch (err) {
         console.error("Failed to fetch posts", err);
@@ -46,10 +94,22 @@ export default function PostsFeed({ userId: propUserId }) {
     };
 
     fetchPosts();
-  }, [propUserId, params]);
+  }, [propUserId, params, refreshTrigger, propPosts, groupId, user]);
 
   if (loading) {
     return <div className={style.postsFeed}>Loading...</div>;
+  }
+
+  if (locked) {
+    return (
+      <div className={style.postsFeed}>
+        <div className={style.postsFeedContainer}>
+          <div style={{ width: "100%", padding: "24px", borderRadius: "12px", background: "#121212", border: "1px solid #222", color: "#aaa", textAlign: "center" }}>
+            This profile is private. Follow to see posts.
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const handleOpenPost = (post) => {
@@ -74,7 +134,8 @@ export default function PostsFeed({ userId: propUserId }) {
       {selectedPost && (
         <OpenPost 
           postData={selectedPost} 
-          onClose={handleClosePost} 
+          onClose={handleClosePost}
+          endpoints={endpoints}
         />
       )}
     </div>

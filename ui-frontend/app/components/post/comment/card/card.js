@@ -1,5 +1,5 @@
 import style from "./card.module.css";
-import { Eye } from "lucide-react";
+import { Eye } from "../../../icons";
 
 
 

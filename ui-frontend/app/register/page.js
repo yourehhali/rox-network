@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { apiFetch } from '../../lib/api';
 import style from './register.module.css';
 import Link from 'next/link';
-import { UserPlus } from 'lucide-react';
+import { UserPlus } from '../components/icons';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({

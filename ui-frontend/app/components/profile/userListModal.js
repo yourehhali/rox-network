@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import style from "./userListModal.module.css";
 import { apiFetch, toMediaUrl } from "../../../lib/api";
-import { X } from "lucide-react";
+import { X } from "../icons";
 import Link from "next/link";
 
 export default function UserListModal({ type, userId, onClose }) {

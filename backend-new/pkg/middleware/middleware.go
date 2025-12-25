@@ -3,7 +3,7 @@ package middleware
 import (
 	"context"
 	"database/sql"
-	"fmt"
+	"log"
 	"net/http"
 	"social-network/pkg/repository"
 )
@@ -14,7 +14,6 @@ const UserIDKey contextKey = "userID"
 
 func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// fmt.Println("AuthMiddleware hit", r.Method, r.URL.Path)
 
 		// Allow OPTIONS (CORS)
 		if r.Method == "OPTIONS" {
@@ -37,7 +36,7 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 				return
 			}
 			// Log internal error but return 401/500
-			fmt.Printf("Database error in middleware: %v\n", err)
+			log.Printf("Database error in middleware: %v\n", err)
 			http.Error(w, `{"message":"internal server error"}`, http.StatusInternalServerError)
 			return
 		}

@@ -116,7 +116,7 @@
 .header span {
     font-size: 1.2rem;
     font-weight: bold;
-    color: #F3FFAB;
+    color: white;
 }
 
 .messages {
@@ -125,8 +125,6 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
-    padding: 10px;
-    margin-right: -10px;
     padding-right: 10px;
 }
 
@@ -179,6 +177,7 @@
     margin-top: 20px;
     padding-top: 20px;
     border-top: 1px solid #333;
+    position: relative;
 }
 
 .inputRow input {
@@ -214,11 +213,42 @@
     transform: scale(1.02);
 }
 
+.emojiButton {
+    padding: 0 16px !important;
+    background: transparent !important;
+    border: 1px solid #333 !important;
+    color: #F3FFAB !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.emojiButton:hover {
+    background: #252525 !important;
+    border-color: #F3FFAB !important;
+}
+
+.emojiPickerContainer {
+    position: absolute;
+    bottom: 80px;
+    left: 0;
+    z-index: 1000;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+    border-radius: 12px;
+    border: 1px solid #333;
+    overflow: hidden;
+}
+
 .placeholder {
     flex: 1;
     display: flex;
     justify-content: center;
     align-items: center;
     color: #666;
-    font-size: 1.2rem;
+  font-size: 1.2rem;
+}
+
+.bigEmoji {
+  font-size: 3rem;
+  line-height: 1.2;
 }

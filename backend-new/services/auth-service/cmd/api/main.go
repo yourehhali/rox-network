@@ -23,7 +23,10 @@ func main() {
 	fmt.Println("Auth Service connected to database at", dbPath)
 
 	// Run Migrations
-	migrationsPath := "../../migrations/sqlite"
+	migrationsPath := os.Getenv("MIGRATIONS_PATH")
+	if migrationsPath == "" {
+		migrationsPath = "pkg/db/migrations/sqlite"
+	}
 	if err := database.RunMigrations(database.DB, migrationsPath); err != nil {
 		log.Printf("Warning: Failed to run migrations: %v", err)
 	} else {

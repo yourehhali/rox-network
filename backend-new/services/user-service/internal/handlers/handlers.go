@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"social-network/pkg/middleware"
 	"social-network/pkg/models"
+	"social-network/pkg/utils"
 	"strconv"
 	"time"
 	"user-service/internal/repository"
@@ -55,6 +57,7 @@ func Profile(w http.ResponseWriter, r *http.Request) {
 
 	isPending, _ := repository.IsPending(viewerID, targetUserID)
 	isFollowing, _ := repository.IsFollowing(viewerID, targetUserID)
+	postsCount, _ := repository.GetUserPostsCount(targetUserID)
 
 	response := struct {
 		User           models.User `json:"user"`
@@ -62,12 +65,14 @@ func Profile(w http.ResponseWriter, r *http.Request) {
 		FollowingCount int         `json:"following_count"`
 		IsFriend       bool        `json:"isfriend"`
 		IsPending      bool        `json:"p"` // matching frontend expectation "p"
+		HasPosts       bool        `json:"has_posts"`
 	}{
 		User:           userData,
 		FollowersCount: followersCount,
 		FollowingCount: followingCount,
 		IsFriend:       isFollowing,
 		IsPending:      isPending,
+		HasPosts:       postsCount > 0,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -86,21 +91,17 @@ type FollowResponse struct {
 }
 
 func SetFollowers(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("DEBUG: SetFollowers handler called")
 	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
 	if !ok {
-		fmt.Println("DEBUG: Unauthorized access in SetFollowers")
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
 	var req FollowRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		fmt.Printf("DEBUG: Invalid request body in SetFollowers: %v\n", err)
-		http.Error(w, "invalid request", http.StatusBadRequest)
+		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
-	fmt.Printf("DEBUG: User %d toggling follow for %d\n", userID, req.FollowedID)
 
 	var status string
 	isPending, _ := repository.IsPending(userID, req.FollowedID)
@@ -138,7 +139,7 @@ func SetFollowers(w http.ResponseWriter, r *http.Request) {
 		// Start following
 		isPrivate, err := repository.IsUserPrivate(req.FollowedID)
 		if err != nil {
-			fmt.Printf("IsUserPrivate error for user %d: %v\n", req.FollowedID, err)
+			log.Printf("IsUserPrivate error for user %d: %v\n", req.FollowedID, err)
 			http.Error(w, "error checking privacy", http.StatusInternalServerError)
 			return
 		}
@@ -195,6 +196,7 @@ func RequestFollow(w http.ResponseWriter, r *http.Request) {
 
 	var input struct {
 		SenderID int    `json:"sender_id"`
+		NotifID  int    `json:"notif_id"`
 		Status   string `json:"status"` // "accept" | "reject"
 	}
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -242,6 +244,7 @@ func RequestFollow(w http.ResponseWriter, r *http.Request) {
 
 	// Remove the original request notification for the Receiver (me)
 	_ = sendInternalNotification(models.Notification{
+		ID:       input.NotifID,
 		UserID:   receiverID,
 		Type:     "notification_removed",
 		Message:  "Invitation_friendships",
@@ -260,16 +263,14 @@ func RequestFollow(w http.ResponseWriter, r *http.Request) {
 
 // sendInternalNotification posts to chat-service internal notification endpoint
 func sendInternalNotification(n models.Notification) error {
-	fmt.Printf("DEBUG: Sending notification: %+v\n", n)
 	b, _ := json.Marshal(n)
 	// Direct call to chat-service internal endpoint
 	resp, err := http.Post("http://localhost:8085/internal/notification", "application/json", bytes.NewReader(b))
 	if err != nil {
-		fmt.Printf("DEBUG: Error sending notification: %v\n", err)
+		log.Printf("Error sending notification: %v\n", err)
 		return err
 	}
 	defer resp.Body.Close()
-	fmt.Println("DEBUG: Notification sent successfully")
 	return nil
 }
 
@@ -336,7 +337,7 @@ func UpdatePrivacy(w http.ResponseWriter, r *http.Request) {
 
 	err := repository.UpdatePrivacy(userID, req.IsPrivate)
 	if err != nil {
-		fmt.Println("DB update error:", err)
+		log.Println("DB update error:", err)
 		http.Error(w, "Failed to update privacy", http.StatusInternalServerError)
 		return
 	}
@@ -380,7 +381,16 @@ func UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	file, handler, err := r.FormFile("avatar")
 	if err == nil {
 		defer file.Close()
-		uploadDir := "../../uploads"
+
+		if !utils.IsAllowedImageExtension(handler.Filename) {
+			http.Error(w, "Invalid avatar file type. Allowed: .jpg, .jpeg, .png, .gif, .webp", http.StatusBadRequest)
+			return
+		}
+
+		uploadDir := os.Getenv("UPLOAD_DIR")
+		if uploadDir == "" {
+			uploadDir = "../../uploads"
+		}
 		if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
 			os.MkdirAll(uploadDir, 0755)
 		}
@@ -406,7 +416,7 @@ func UpdateProfile(w http.ResponseWriter, r *http.Request) {
 
 	err = repository.UpdateUserInfo(userID, u)
 	if err != nil {
-		fmt.Printf("UpdateUserInfo error: %v\n", err)
+		log.Printf("UpdateUserInfo error: %v\n", err)
 		http.Error(w, "Failed to update profile", http.StatusInternalServerError)
 		return
 	}

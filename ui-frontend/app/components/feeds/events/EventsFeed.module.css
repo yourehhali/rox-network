@@ -1,0 +1,13 @@
+.eventsFeed {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.eventsFeedContainer {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}

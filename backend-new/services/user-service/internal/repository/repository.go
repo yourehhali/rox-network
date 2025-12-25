@@ -23,6 +23,7 @@ const (
 	UPDATE_FOLLOW_STATUS   = `UPDATE followers SET status = ? WHERE follower_id = ? AND followed_id = ?`
 	CHECK_PRIVACY          = `SELECT is_private FROM users WHERE id = ?`
 	UPDATE_USER_INFO       = `UPDATE users SET first_name = ?, last_name = ?, nickname = ?, about = ?, avatar = ?, is_private = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
+	COUNT_USER_POSTS       = `SELECT COUNT(*) FROM posts WHERE user_id = ?`
 	// Suggestion queries, etc. can be added here
 )
 
@@ -141,6 +142,12 @@ func IsUserPrivate(userID int) (bool, error) {
 func UpdateFollowStatus(followerID, followedID int, status string) error {
 	_, err := database.DB.Exec(UPDATE_FOLLOW_STATUS, status, followerID, followedID)
 	return err
+}
+
+func GetUserPostsCount(userID int) (int, error) {
+	var count int
+	err := database.DB.QueryRow(COUNT_USER_POSTS, userID).Scan(&count)
+	return count, err
 }
 
 type Friend struct {

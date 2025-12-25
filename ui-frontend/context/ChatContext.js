@@ -41,7 +41,7 @@ export function ChatProvider({ children }) {
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log("Chat WS Connected");
+        // Connected
       };
 
       ws.onmessage = (ev) => {
@@ -50,18 +50,17 @@ export function ChatProvider({ children }) {
           // Notify subscribers
           subscribersRef.current.forEach(cb => cb(msg));
         } catch (e) {
-          console.error("Chat WS Parse Error", e);
+          // Parse Error
         }
       };
 
       ws.onclose = () => {
-        console.log("Chat WS Closed");
         wsRef.current = null;
         // Optional: Reconnect logic could go here
       };
 
       ws.onerror = (err) => {
-        console.error("Chat WS Error", err);
+        // WS Error
       };
     };
 
@@ -78,8 +77,6 @@ export function ChatProvider({ children }) {
   const sendMessage = (msg) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(msg));
-    } else {
-      console.warn("Chat WS not connected");
     }
   };
 

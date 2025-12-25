@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -113,7 +112,7 @@ func main() {
 	})
 
 	port := ":8080"
-	fmt.Printf("API Gateway running on %s\n", port)
+	log.Printf("API Gateway running on %s\n", port)
 	if err := http.ListenAndServe(port, nil); err != nil {
 		log.Fatal(err)
 	}

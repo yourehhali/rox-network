@@ -109,9 +109,17 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		defer file.Close()
 
+		if !utils.IsAllowedImageExtension(handler.Filename) {
+			http.Error(w, `{"status":"error","message":"Invalid avatar file type. Allowed: .jpg, .jpeg, .png, .gif, .webp"}`, http.StatusBadRequest)
+			return
+		}
+
 		// Note: In microservices, this should ideally be handled by Media Service.
 		// For now, we save it to a shared location or local uploads.
-		uploadDir := "../../uploads" // Relative to where binary runs, or absolute path
+		uploadDir := os.Getenv("UPLOAD_DIR") // Relative to where binary runs, or absolute path
+		if uploadDir == "" {
+			uploadDir = "../../uploads"
+		}
 		if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
 			os.MkdirAll(uploadDir, 0755)
 		}
@@ -122,7 +130,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 
 		dst, err := os.Create(fullPath)
 		if err != nil {
-			fmt.Println("Error creating file:", err)
+			log.Println("Error creating file:", err)
 			http.Error(w, `{"status":"error","message":"Cannot save avatar"}`, http.StatusInternalServerError)
 			return
 		}
@@ -163,7 +171,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, `{"status":"error","message":"Username or email already used"}`, http.StatusConflict)
 			return
 		}
-		fmt.Println("DB Error:", err)
+		log.Println("DB Error:", err)
 		http.Error(w, `{"status":"error","message":"Server error"}`, http.StatusInternalServerError)
 		return
 	}

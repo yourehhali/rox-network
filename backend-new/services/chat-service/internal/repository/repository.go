@@ -33,6 +33,14 @@ var (
 		INSERT INTO notifications (user_id, sender_id, type, message, group_id, event_id, state, created_at)
 		VALUES (?, ?, ?, ?, ?, ?, 'unread', ?)
 	`
+	CHECK_EXISTING_NOTIFICATION = `
+		SELECT id FROM notifications 
+		WHERE user_id = ? AND sender_id = ? AND type = ? 
+		AND (group_id = ? OR (group_id IS NULL AND ? = 0))
+		AND (event_id = ? OR (event_id IS NULL AND ? = 0))
+		AND state = 'unread'
+		LIMIT 1
+	`
 	SELECT_UNREAD_NOTIFICATIONS = `
 		SELECT 
 			n.id, n.user_id, n.type, n.message, n.state, n.event_id, n.created_at, 
@@ -44,11 +52,12 @@ var (
 		WHERE n.user_id = ? AND n.state = 'unread'
 		ORDER BY n.created_at DESC
 	`
-	UPDATE_NOTIFICATION_STATUS = "UPDATE notifications SET state = ? WHERE id = ?"
-	UPDATE_INVITATION_STATUS   = "UPDATE notifications SET state = ? WHERE user_id = ? AND sender_id = ? AND type = 'Invitation_friendships' AND message = 'request'"
-	SELECT_GROUP_MEMBERS       = "SELECT user_id FROM group_members WHERE group_id = ? AND status = 'member'"
-	IS_USER_GROUP_MEMBER       = "SELECT COUNT(*) FROM group_members WHERE user_id = ? AND group_id = ? AND status = 'member'"
-	SELECT_PRIVATE_MESSAGES    = `
+	UPDATE_NOTIFICATION_STATUS  = "UPDATE notifications SET state = ? WHERE id = ?"
+	UPDATE_INVITATION_STATUS    = "UPDATE notifications SET state = ? WHERE user_id = ? AND sender_id = ? AND type = 'Invitation_friendships' AND message = 'request'"
+	DELETE_NOTIFICATION_BY_TYPE = "DELETE FROM notifications WHERE user_id = ? AND sender_id = ? AND group_id = ? AND type = ?"
+	SELECT_GROUP_MEMBERS        = "SELECT user_id FROM group_members WHERE group_id = ? AND status = 'member'"
+	IS_USER_GROUP_MEMBER        = "SELECT COUNT(*) FROM group_members WHERE user_id = ? AND group_id = ? AND status = 'member'"
+	SELECT_PRIVATE_MESSAGES     = `
 		SELECT m.id, m.sender_id, m.content, m.is_emoji, m.created_at,
 		       u.id, u.username, u.first_name, u.last_name, u.avatar
 		FROM messages m
@@ -161,6 +170,21 @@ func SaveMessage(senderID int, receiverID, groupID *int, content string, isEmoji
 }
 
 func InsertNotification(n models.Notification) (int, error) {
+	// Check for existing unread notification to prevent duplicates
+	var existingID int
+	err := database.DB.QueryRow(CHECK_EXISTING_NOTIFICATION,
+		n.UserID, n.SenderID, n.Type,
+		n.GroupID, n.GroupID,
+		n.EventID, n.EventID).Scan(&existingID)
+
+	if err == nil && existingID > 0 {
+		// Duplicate found, return existing ID
+		return existingID, nil
+	} else if err != nil && err != sql.ErrNoRows {
+		// Real error
+		return 0, err
+	}
+
 	result, err := database.DB.Exec(INSERT_NOTIFICATION, n.UserID, n.SenderID, n.Type, n.Message, n.GroupID, n.EventID, time.Now())
 	if err != nil {
 		return 0, err
@@ -230,6 +254,16 @@ func UpdateNotificationStatus(id int, state string) error {
 
 func UpdateInvitationStatus(receiverID, senderID int, state string) error {
 	_, err := database.DB.Exec(UPDATE_INVITATION_STATUS, state, receiverID, senderID)
+	return err
+}
+
+func DeleteNotificationByType(userID, senderID, groupID int, targetType string) error {
+	_, err := database.DB.Exec(DELETE_NOTIFICATION_BY_TYPE, userID, senderID, groupID, targetType)
+	return err
+}
+
+func DeleteNotificationByID(id int) error {
+	_, err := database.DB.Exec("DELETE FROM notifications WHERE id = ?", id)
 	return err
 }
 

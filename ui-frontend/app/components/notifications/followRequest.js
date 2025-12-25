@@ -19,6 +19,7 @@ export default function FollowRequest({ notification, onHandled }) {
         method: "POST",
         body: JSON.stringify({
           sender_id: senderId,
+          notif_id: notification.id,
           status: action,
         }),
       });

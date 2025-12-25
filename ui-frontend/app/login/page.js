@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../lib/api';
 import style from './login.module.css';
 import Link from 'next/link';
-import { LogIn } from 'lucide-react';
+import { LogIn } from '../components/icons';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');

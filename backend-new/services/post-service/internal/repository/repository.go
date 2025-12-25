@@ -2,7 +2,7 @@ package repository
 
 import (
 	"database/sql"
-	"fmt"
+	"log"
 	"social-network/pkg/database"
 	"social-network/pkg/models"
 )
@@ -30,8 +30,8 @@ var (
         LEFT JOIN followers f ON f.followed_id = p.user_id AND f.follower_id = ? AND f.status = 'accepted'
         LEFT JOIN post_viewers pv ON pv.post_id = p.id AND pv.user_id = ?
         WHERE 
-           p.privacy = 0 
-           OR p.user_id = ? 
+           p.user_id = ? 
+           OR (p.privacy = 0 AND (u.is_private = 0 OR f.id IS NOT NULL))
            OR (p.privacy = 1 AND f.id IS NOT NULL) 
            OR (p.privacy = 2 AND pv.id IS NOT NULL)
         ORDER BY p.created_at DESC
@@ -49,8 +49,8 @@ var (
         LEFT JOIN post_viewers pv ON pv.post_id = p.id AND pv.user_id = ?
         WHERE p.user_id = ?
           AND (
-             p.privacy = 0 
-             OR p.user_id = ? 
+             p.user_id = ? 
+             OR (p.privacy = 0 AND (u.is_private = 0 OR f.id IS NOT NULL))
              OR (p.privacy = 1 AND f.id IS NOT NULL) 
              OR (p.privacy = 2 AND pv.id IS NOT NULL)
           )
@@ -64,7 +64,7 @@ var (
 		 FROM comments c 
 		 JOIN users u ON c.user_id = u.id 
 		 WHERE c.post_id = ? 
-		 ORDER BY c.created_at ASC`
+		 ORDER BY c.created_at DESC`
 	SELECT_REACTION = "SELECT reaction_type FROM reactions WHERE user_id = ? AND post_id = ?"
 	INSERT_REACTION = "INSERT INTO reactions (user_id, post_id, reaction_type) VALUES (?, ?, ?)"
 	DELETE_REACTION = "DELETE FROM reactions WHERE user_id = ? AND post_id = ?"
@@ -87,7 +87,7 @@ func AddNewPost(userId int, title string, content string, image string, privacy 
 	id, err := res.LastInsertId()
 	if err != nil {
 		tx.Rollback()
-		fmt.Println("Warning: could not get LastInsertId:", err)
+		log.Println("Warning: could not get LastInsertId:", err)
 		return 0, nil
 	}
 

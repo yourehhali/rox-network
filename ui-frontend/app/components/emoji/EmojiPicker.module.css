@@ -1,0 +1,49 @@
+.container {
+    width: 160px;
+    height: 200px;
+    background-color: #1A1A1A;
+    border: 1px solid #333;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 2px;
+    padding: 2px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.grid::-webkit-scrollbar {
+    width: 6px;
+}
+
+.grid::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 3px;
+}
+
+.emojiBtn {
+    background: transparent;
+    border: none;
+    background-color: #252525 !important;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 2px !important;
+    border-radius: 6px !important;
+    transition: background-color 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1;
+}
+
+.emojiBtn:hover {
+    background-color: #333;
+    transform: scale(1.1);
+}

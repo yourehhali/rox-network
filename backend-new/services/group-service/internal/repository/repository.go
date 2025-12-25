@@ -31,14 +31,14 @@ var (
 		VALUES (?, ?, ?, ?, ?, ?)`
 	SELECT_GROUP_POST_BY_ID = `
 		SELECT gp.id, gp.group_id, gp.creator_id, gp.title, gp.content, gp.image, gp.created_at, gp.created_at,
-		       u.username, u.first_name || ' ' || u.last_name
+		       u.username, u.first_name || ' ' || u.last_name, COALESCE(u.avatar, '')
 		FROM group_posts gp
 		JOIN users u ON gp.creator_id = u.id
 		WHERE gp.id = ?
 	`
 	SELECT_GROUP_POSTS = `
 		SELECT gp.id, gp.group_id, gp.creator_id, gp.title, gp.content, gp.image, gp.created_at, gp.created_at,
-		       u.username, u.first_name || ' ' || u.last_name
+		       u.username, u.first_name || ' ' || u.last_name, COALESCE(u.avatar, '')
 		FROM group_posts gp
 		JOIN users u ON gp.creator_id = u.id
 		WHERE gp.group_id = ?
@@ -52,13 +52,13 @@ var (
 	UPDATE_EVENT_MEMBER = "UPDATE event_members SET status = ? WHERE event_id = ? AND user_id = ?"
 	SELECT_GROUP_EVENTS = `
 		SELECT e.id, e.title, e.description, e.event_time, e.creator_id,
-		       COALESCE(em.status, 'not_going') as user_status
+		       COALESCE(em.status, 'pending') as user_status
 		FROM events e
 		LEFT JOIN event_members em ON e.id = em.event_id AND em.user_id = ?
 		WHERE e.group_id = ?
 	`
 	SELECT_GROUPS_FOR_INVITE = `
-    SELECT g.id, g.title, g.description, g.creator_id
+    SELECT g.id, g.title, g.description, g.creator_id, COALESCE(target_member.status, 'none') as invite_status
     FROM groups g
     JOIN group_members current_member 
         ON current_member.group_id = g.id 
@@ -66,17 +66,17 @@ var (
        AND current_member.status = 'member'
     LEFT JOIN group_members target_member 
         ON target_member.group_id = g.id 
-       AND target_member.user_id = ? 
-       AND target_member.status = 'member'
-    WHERE target_member.user_id IS NULL;
+       AND target_member.user_id = ?
+    WHERE target_member.status IS NULL OR target_member.status != 'member';
     `
 )
 
 type Group struct {
-	ID          int    `json:"id"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	CreatorID   int    `json:"creator_id"`
+	ID           int    `json:"id"`
+	Title        string `json:"title"`
+	Description  string `json:"description"`
+	CreatorID    int    `json:"creator_id"`
+	InviteStatus string `json:"invite_status,omitempty"`
 }
 
 type GroupWithStatus struct {
@@ -95,6 +95,7 @@ type GroupPost struct {
 	UpdatedAt string `json:"updated_at"`
 	UserName  string `json:"username"`
 	FullName  string `json:"full_name"`
+	Avatar    string `json:"avatar"`
 }
 
 type Event struct {
@@ -233,7 +234,7 @@ func InsertGroupPost(groupID, creatorID int, title, content, image string) (int6
 func GetGroupPostByID(postID int) (*GroupPost, error) {
 	var p GroupPost
 	var createdAt, updatedAt time.Time
-	err := database.DB.QueryRow(SELECT_GROUP_POST_BY_ID, postID).Scan(&p.ID, &p.GroupID, &p.CreatorID, &p.Title, &p.Content, &p.Image, &createdAt, &updatedAt, &p.UserName, &p.FullName)
+	err := database.DB.QueryRow(SELECT_GROUP_POST_BY_ID, postID).Scan(&p.ID, &p.GroupID, &p.CreatorID, &p.Title, &p.Content, &p.Image, &createdAt, &updatedAt, &p.UserName, &p.FullName, &p.Avatar)
 
 	if err != nil {
 		return nil, err
@@ -254,7 +255,7 @@ func GetGroupPosts(groupID int) ([]GroupPost, error) {
 	for rows.Next() {
 		var p GroupPost
 		var createdAt, updatedAt time.Time
-		if err := rows.Scan(&p.ID, &p.GroupID, &p.CreatorID, &p.Title, &p.Content, &p.Image, &createdAt, &updatedAt, &p.UserName, &p.FullName); err != nil {
+		if err := rows.Scan(&p.ID, &p.GroupID, &p.CreatorID, &p.Title, &p.Content, &p.Image, &createdAt, &updatedAt, &p.UserName, &p.FullName, &p.Avatar); err != nil {
 			continue
 		}
 		p.CreatedAt = createdAt.Format(time.RFC3339)
@@ -323,7 +324,7 @@ func GetGroupsForInvite(currentUserID, targetUserID int) ([]Group, error) {
 	var groups []Group
 	for rows.Next() {
 		var g Group
-		if err := rows.Scan(&g.ID, &g.Title, &g.Description, &g.CreatorID); err != nil {
+		if err := rows.Scan(&g.ID, &g.Title, &g.Description, &g.CreatorID, &g.InviteStatus); err != nil {
 			return nil, err
 		}
 		groups = append(groups, g)
