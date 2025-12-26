@@ -13,7 +13,7 @@ import (
 func main() {
 	dbPath := os.Getenv("DB_PATH")
 	if dbPath == "" {
-		dbPath = "../../database/forum.db"
+		dbPath = "../../database/social.db"
 	}
 	database.InitDB(dbPath)
 	fmt.Println("Post Service connected to database at", dbPath)

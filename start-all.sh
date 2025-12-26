@@ -17,7 +17,7 @@ cd backend-new
 
 # Set DB_PATH for all services
 # Ensure the path is absolute
-export DB_PATH=$(pwd)/database/forum.db
+export DB_PATH=$(pwd)/database/social.db
 export MIGRATIONS_PATH=$(pwd)/pkg/db/migrations/sqlite
 export UPLOAD_DIR=$(pwd)/uploads
 echo "Database Path: $DB_PATH"

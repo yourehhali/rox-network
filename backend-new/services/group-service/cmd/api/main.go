@@ -14,7 +14,7 @@ func main() {
 	// Initialize Database
 	dbPath := os.Getenv("DB_PATH")
 	if dbPath == "" {
-		dbPath = "../../database/forum.db"
+		dbPath = "../../database/social.db"
 	}
 	database.InitDB(dbPath)
 

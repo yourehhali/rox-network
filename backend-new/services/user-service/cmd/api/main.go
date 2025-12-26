@@ -13,7 +13,7 @@ import (
 func main() {
 	dbPath := os.Getenv("DB_PATH")
 	if dbPath == "" {
-		dbPath = "../../database/forum.db"
+		dbPath = "../../database/social.db"
 	}
 	database.InitDB(dbPath)
 	fmt.Println("User Service connected to database at", dbPath)
@@ -31,10 +31,10 @@ func main() {
 	mux.HandleFunc("/update-profile", middleware.AuthMiddleware(handlers.UpdateProfile))
 	mux.HandleFunc("/followers", middleware.AuthMiddleware(handlers.FollowersList))
 	mux.HandleFunc("/following", middleware.AuthMiddleware(handlers.FollowingList))
-	// Add other handlers...
+	// Add other handlers... !! 
 
-	handler := middleware.CORSMiddleware(mux)
-
+	handler := middleware.CORSMiddleware(mux) 
+	
 	port := ":8082" // User Service Port
 	fmt.Printf("User Service running on %s\n", port)
 	if err := http.ListenAndServe(port, handler); err != nil {
