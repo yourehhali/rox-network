@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"group-service/internal/handlers"
+	"social-network/services/group-service/internal/handlers"
 	"log"
 	"net/http"
 	"os"

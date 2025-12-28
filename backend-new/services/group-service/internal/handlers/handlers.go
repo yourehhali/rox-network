@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"group-service/internal/repository"
+	"social-network/services/group-service/internal/repository"
 	"io"
 	"net/http"
 	"os"

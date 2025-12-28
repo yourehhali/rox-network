@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"post-service/internal/handlers"
+	"social-network/services/post-service/internal/handlers"
 	"social-network/pkg/database"
 	"social-network/pkg/middleware"
 )

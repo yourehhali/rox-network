@@ -7,7 +7,7 @@ import (
 	"os"
 	"social-network/pkg/database"
 	"social-network/pkg/middleware"
-	"user-service/internal/handlers"
+	"social-network/services/user-service/internal/handlers"
 )
 
 func main() {

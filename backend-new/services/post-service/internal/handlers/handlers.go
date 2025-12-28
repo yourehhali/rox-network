@@ -7,7 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"post-service/internal/repository"
+	"social-network/services/post-service/internal/repository"
 	"social-network/pkg/database"
 	"social-network/pkg/middleware"
 	"social-network/pkg/utils"

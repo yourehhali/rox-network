@@ -13,7 +13,7 @@ import (
 	"social-network/pkg/utils"
 	"strconv"
 	"time"
-	"user-service/internal/repository"
+	"social-network/services/user-service/internal/repository"
 )
 
 func Profile(w http.ResponseWriter, r *http.Request) {

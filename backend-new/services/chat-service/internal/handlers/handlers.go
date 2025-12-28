@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	repository "chat-service/internal/repository"
+	repository "social-network/services/chat-service/internal/repository"
 	"encoding/json"
 	"log"
 	"net/http"

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"chat-service/internal/handlers"
+	"social-network/services/chat-service/internal/handlers"
 	"fmt"
 	"log"
 	"net/http"

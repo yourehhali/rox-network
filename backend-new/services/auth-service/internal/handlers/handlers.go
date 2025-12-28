@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"auth-service/internal/repository"
+	"social-network/services/auth-service/internal/repository"
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
