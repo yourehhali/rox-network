@@ -3,7 +3,7 @@
 # Function to kill processes on exit
 cleanup() {
     echo "Stopping all services..."
-    lsof -ti:3000,8080,8081,8082,8083,8084,8085,8086 | xargs kill -9 2>/dev/null
+    lsof -ti:3000,8080,8081,8082,8083,8084,8085,8086,8087 | xargs kill -9 2>/dev/null
     echo "All services stopped."
     exit
 }
@@ -27,21 +27,29 @@ echo "Migrations Path: $MIGRATIONS_PATH"
 # Start services
 echo "Starting Auth Service (8081)..."
 go run services/auth-service/cmd/api/main.go &
+sleep 1
 
 echo "Starting User Service (8082)..."
 go run services/user-service/cmd/api/main.go &
+sleep 1
 
 echo "Starting Post Service (8083)..."
 go run services/post-service/cmd/api/main.go &
+sleep 1
 
 echo "Starting Media Service (8084)..."
 go run services/media-service/cmd/api/main.go &
+sleep 1
 
 echo "Starting Chat Service (8085)..."
 go run services/chat-service/cmd/api/main.go &
+sleep 1
 
 echo "Starting Group Service (8086)..."
 go run services/group-service/cmd/api/main.go &
+
+echo "Starting Notification Service (8087)..."
+go run services/notification-service/cmd/api/main.go &
 
 # Wait a bit for services to initialize
 sleep 3

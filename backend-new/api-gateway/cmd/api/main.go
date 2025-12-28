@@ -23,6 +23,7 @@ func main() {
 	mediaURL, _ := url.Parse(getEnv("MEDIA_SERVICE_URL", "http://localhost:8084"))
 	chatURL, _ := url.Parse(getEnv("CHAT_SERVICE_URL", "http://localhost:8085"))
 	groupURL, _ := url.Parse(getEnv("GROUP_SERVICE_URL", "http://localhost:8086"))
+	notificationURL, _ := url.Parse(getEnv("NOTIFICATION_SERVICE_URL", "http://localhost:8087"))
 
 	newProxy := func(target *url.URL) *httputil.ReverseProxy {
 		proxy := httputil.NewSingleHostReverseProxy(target)
@@ -42,6 +43,7 @@ func main() {
 	mediaProxy := newProxy(mediaURL)
 	chatProxy := newProxy(chatURL)
 	groupProxy := newProxy(groupURL)
+	notificationProxy := newProxy(notificationURL)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
@@ -86,11 +88,16 @@ func main() {
 		case strings.HasPrefix(path, "/uploads/"):
 			mediaProxy.ServeHTTP(w, r)
 
-		case path == "/ws" ||
-			path == "/notifications" ||
-			path == "/chat/ws" ||
+		case path == "/chat/ws" ||
 			strings.HasPrefix(path, "/chat/"):
 			chatProxy.ServeHTTP(w, r)
+
+		case path == "/ws" ||
+			path == "/notifications" ||
+			strings.HasPrefix(path, "/notifications/") ||
+			path == "/notifications/read" ||
+			path == "/notifications/send":
+			notificationProxy.ServeHTTP(w, r)
 
 		case path == "/Create_Group" ||
 			path == "/Get_Groups" ||

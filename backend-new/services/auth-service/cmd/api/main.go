@@ -24,6 +24,7 @@ func main() {
 	if migrationsPath == "" {
 		migrationsPath = "../../pkg/db/migrations/sqlite"
 	}
+	log.Println("Migrations Path:", migrationsPath)
 	if err := database.RunMigrations(database.DB, migrationsPath); err != nil {
 		log.Printf("Warning: Failed to run migrations: %v", err)
 	} else {

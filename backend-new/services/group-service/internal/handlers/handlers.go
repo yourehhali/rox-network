@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"social-network/services/group-service/internal/repository"
 	"io"
 	"net/http"
 	"os"
@@ -12,6 +11,7 @@ import (
 	"social-network/pkg/models"
 	sharedRepo "social-network/pkg/repository"
 	"social-network/pkg/utils"
+	"social-network/services/group-service/internal/repository"
 	"strconv"
 	"strings"
 	"time"
@@ -20,7 +20,7 @@ import (
 // Helper to send notification to chat-service
 func sendNotification(n models.Notification) {
 	data, _ := json.Marshal(n)
-	resp, err := http.Post("http://localhost:8085/internal/notification", "application/json", bytes.NewBuffer(data))
+	resp, err := http.Post("http://localhost:8087/internal/notification", "application/json", bytes.NewBuffer(data))
 	if err != nil {
 		return
 	}
@@ -120,6 +120,7 @@ func RequestJoin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "requested"})
 }
 
 // AcceptRejectJoin handles join request decisions
@@ -244,21 +245,7 @@ func GetGroupByID(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
 	var userStatus string
 	if ok {
-		// We can reuse GetGroups or just query simply
-		// But GetGroups gets all groups.
-		// Let's just check quickly if they are in members list?
-		// Or query DB.
-		// For efficiency, since we have members list, we can check it.
-		for _, m := range members {
-			if m.ID == userID {
-				userStatus = "member"
-				break
-			}
-		}
-		// If not found in members, they might be pending/requested?
-		// GetGroupMembersDetails only returns 'member' status.
-		// If we want accurate status (pending etc), we should query DB.
-		// But let's stick to what we have or improve repository.
+		userStatus, _ = repository.GetUserGroupStatus(id, userID)
 	}
 
 	// Construct response

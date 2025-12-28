@@ -26,7 +26,7 @@ export default function LeftBar() {
   const pathname = usePathname();
   const { user } = useAuth();
   const { addToast } = useToast();
-  const { triggerFeedRefresh } = usePosts();
+  const { triggerFeedRefresh, triggerGroupRefresh } = usePosts();
   
   const [showCreatePostModal, setShowCreatePostModal] = useState(false);
   const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
@@ -225,6 +225,7 @@ export default function LeftBar() {
             onSuccess={() => {
                 setShowCreateGroupModal(false);
                 addToast("Group created successfully!", "success");
+                triggerGroupRefresh();
             }}
           />
       )}

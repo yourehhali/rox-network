@@ -15,9 +15,6 @@ var (
 	ChatClients = make(map[int]map[string]*websocket.Conn)
 	ChatMutex   sync.Mutex
 
-	NotificationClients = make(map[int]map[string]*websocket.Conn)
-	NotifMutex          sync.Mutex
-
 	SELECT_CAN_USERS_CHAT = `
 		SELECT u1.is_private, u2.is_private,
 			   (SELECT COUNT(*) FROM followers WHERE follower_id = ? AND followed_id = ? AND status = 'accepted') as u1_follows_u2,
@@ -105,43 +102,6 @@ func GetChatClients(userID int) []*websocket.Conn {
 	defer ChatMutex.Unlock()
 	var conns []*websocket.Conn
 	if sessions, ok := ChatClients[userID]; ok {
-		for _, conn := range sessions {
-			conns = append(conns, conn)
-		}
-	}
-	return conns
-}
-
-func AddNotificationClient(userID int, sessionID string, conn *websocket.Conn) {
-	NotifMutex.Lock()
-	defer NotifMutex.Unlock()
-	if _, ok := NotificationClients[userID]; !ok {
-		NotificationClients[userID] = make(map[string]*websocket.Conn)
-	}
-	NotificationClients[userID][sessionID] = conn
-}
-
-func RemoveNotificationClient(userID int, sessionID string, conn *websocket.Conn) {
-	NotifMutex.Lock()
-	defer NotifMutex.Unlock()
-	if sessions, ok := NotificationClients[userID]; ok {
-		if currentConn, ok := sessions[sessionID]; ok {
-			if currentConn == conn {
-				currentConn.Close()
-				delete(sessions, sessionID)
-			}
-		}
-		if len(sessions) == 0 {
-			delete(NotificationClients, userID)
-		}
-	}
-}
-
-func GetNotificationClients(userID int) []*websocket.Conn {
-	NotifMutex.Lock()
-	defer NotifMutex.Unlock()
-	var conns []*websocket.Conn
-	if sessions, ok := NotificationClients[userID]; ok {
 		for _, conn := range sessions {
 			conns = append(conns, conn)
 		}

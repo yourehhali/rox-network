@@ -11,9 +11,9 @@ import (
 	"social-network/pkg/middleware"
 	"social-network/pkg/models"
 	"social-network/pkg/utils"
+	"social-network/services/user-service/internal/repository"
 	"strconv"
 	"time"
-	"social-network/services/user-service/internal/repository"
 )
 
 func Profile(w http.ResponseWriter, r *http.Request) {
@@ -23,18 +23,19 @@ func Profile(w http.ResponseWriter, r *http.Request) {
 		// handle missing context if needed, but middleware should ensure it
 	}
 
+	var targetUserID int
 	userIDStr := r.URL.Query().Get("id")
 	if userIDStr == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"message": "Missing user ID"})
-		return
-	}
-
-	targetUserID, err := strconv.Atoi(userIDStr)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"message": "Invalid user ID"})
-		return
+		// If no ID provided, return current user's profile
+		targetUserID = viewerID
+	} else {
+		var err error
+		targetUserID, err = strconv.Atoi(userIDStr)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{"message": "Invalid user ID"})
+			return
+		}
 	}
 
 	userData, err := repository.GetUserInfo(targetUserID)
@@ -218,24 +219,9 @@ func RequestFollow(w http.ResponseWriter, r *http.Request) {
 	var err error
 	if input.Status == "accept" {
 		err = repository.UpdateFollowStatus(input.SenderID, receiverID, "accepted")
-		if err == nil {
-			_ = sendInternalNotification(models.Notification{
-				UserID:   input.SenderID,
-				SenderID: receiverID,
-				Type:     "Invitation_friendships",
-				Message:  "accepted",
-			})
-		}
+		
 	} else { // reject
 		err = repository.RemoveFollow(input.SenderID, receiverID)
-		if err == nil {
-			_ = sendInternalNotification(models.Notification{
-				UserID:   input.SenderID,
-				SenderID: receiverID,
-				Type:     "Invitation_friendships",
-				Message:  "rejected",
-			})
-		}
 	}
 	if err != nil {
 		http.Error(w, "Operation failed", http.StatusInternalServerError)
@@ -265,7 +251,7 @@ func RequestFollow(w http.ResponseWriter, r *http.Request) {
 func sendInternalNotification(n models.Notification) error {
 	b, _ := json.Marshal(n)
 	// Direct call to chat-service internal endpoint
-	resp, err := http.Post("http://localhost:8085/internal/notification", "application/json", bytes.NewReader(b))
+	resp, err := http.Post("http://localhost:8087/internal/notification", "application/json", bytes.NewReader(b))
 	if err != nil {
 		log.Printf("Error sending notification: %v\n", err)
 		return err

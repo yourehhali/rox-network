@@ -23,13 +23,20 @@ export default function GroupPage() {
   const loadGroupData = async () => {
     try {
       // 1. Group Details
-      const gRes = await apiFetch(`/Get_Group_By_ID?id=${id}`);
+      const gRes = await apiFetch(`/Get_Group_By_ID?id=${id}`, { cache: "no-store" });
       if (gRes.ok) {
         const data = await gRes.json();
         // Backend returns { group: {...}, members: [...] }
         setGroup(data.group || data); 
         setMembers(data.members || []);
-        if (data.group?.is_member) setJoinState("member");
+        
+        if (data.group?.user_status) {
+          setJoinState(data.group.user_status);
+        } else if (data.group?.is_member) {
+          setJoinState("member");
+        } else {
+          setJoinState(null);
+        }
       }
     } catch (e) {
       console.error(e);

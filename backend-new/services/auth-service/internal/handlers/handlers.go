@@ -108,12 +108,12 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	kb := 1024;
 	mb := 1024 * kb;
 
-	if (handler.Size > int64(15*mb)) {
-		http.Error(w, `{"status":"error","message":"Invalid avatar SIZE MAX 15mb "}`, http.StatusBadRequest) 
-		return
-	} 
 	var avatarPath string
 	if err == nil {
+		if (handler.Size > int64(15*mb)) {
+			http.Error(w, `{"status":"error","message":"Invalid avatar SIZE MAX 15mb "}`, http.StatusBadRequest) 
+			return
+		} 
 		defer file.Close()
 
 		if !utils.IsAllowedImageExtension(handler.Filename) {

@@ -1,11 +1,66 @@
-.FriendsSuggestions{
+.containerWrapper {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.searchIconWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #313131;
+    cursor: pointer;
+    color: white;
+    transition: all 0.2s ease;
+}
+
+.searchIconWrapper:hover {
+    background-color: #F3FFAB33;
+    color: #F3FFAB;
+    transform: scale(1.1);
+}
+
+.expandedPanel {
+    position: absolute;
+    top: 0;
+    right: 60px; /* Opens to the left of the sidebar */
+    width: 300px;
+    background-color: #1A1A1A;
+    border: 1px solid #333;
+    border-radius: 20px;
+    padding: 20px;
+    z-index: 1000;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
     display: flex;
     flex-direction: column;
-    padding: 20px;
-    background-color: #1A1A1A;
-    border-radius: 20px;
     gap: 16px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.searchInput{
     width: 100%;
+    padding: 10px;
+    border-radius: 12px;
+    border: 1px solid #333;
+    background-color: #232323;
+    color: white;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.searchInput:focus{
+    border-color: #F3FFAB;
+}
+.noResults{
+    color: #888;
+    font-size: 0.9rem;
+    text-align: center;
+    width: 100%;
+    padding: 10px;
 }
 .left{
     display: flex;
@@ -47,6 +102,7 @@
     width: 100%;
     gap: 16px;
 }
+
 .left img{
     width: 48px;
     height: 48px;

@@ -157,9 +157,8 @@ export default function ProfileCard() {
                           {followLabel}
                         </button>
                         <button
-                            className={style.followButton}
+                            className={style.inviteButton}
                             onClick={() => setModalType("invite")}
-                            style={{ marginLeft: "10px", backgroundColor: "#3498db" }}
                         >
                             Invite to Group
                         </button>
@@ -167,9 +166,8 @@ export default function ProfileCard() {
                   )}
                   {isMyProfile && (
                      <button
-                       className={style.followButton}
+                       className={`${style.privacyButton} ${!isPrivate ? style.public : ""}`}
                        onClick={handlePrivacyToggle}
-                       style={{ marginLeft: "10px", backgroundColor: isPrivate ? "#e74c3c" : "#2ecc71" }}
                      >
                        {isPrivate ? "Private" : "Public"}
                      </button>
@@ -199,30 +197,33 @@ export default function ProfileCard() {
               </div>
               <div className={style.stats}>
                 <div className={style.statItem} onClick={() => setModalType("followers")}>
-                  <span className={style.statValue}>{profile.followers}</span>
-                  <span className={style.statLabel}>Followers</span>
+                  <div className={style.statValue}>{profile.followers}</div>
+                  <div className={style.statLabel}>Followers</div>
                 </div>
                 <div className={style.statItem} onClick={() => setModalType("following")}>
-                  <span className={style.statValue}>{profile.following}</span>
-                  <span className={style.statLabel}>Following</span>
+                  <div className={style.statValue}>{profile.following}</div>
+                  <div className={style.statLabel}>Following</div>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-      {modalType && modalType !== "invite" && (
-        <UserListModal
-          type={modalType}
-          userId={profile.id}
-          onClose={() => setModalType(null)}
+      
+      {modalType === "invite" && (
+        <InviteGroupModal 
+            userId={profile.id} 
+            onClose={() => setModalType(null)} 
         />
       )}
-      {modalType === "invite" && (
-        <InviteGroupModal
-            userId={profile.id}
-            onClose={() => setModalType(null)}
-        />
+      
+      {/* Reusing UserListModal for followers/following if implemented */}
+      {modalType && modalType !== "invite" && (
+          <UserListModal
+             type={modalType}
+             userId={profile.id}
+             onClose={() => setModalType(null)}
+          />
       )}
     </div>
   );

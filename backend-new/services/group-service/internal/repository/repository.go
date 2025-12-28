@@ -69,6 +69,7 @@ var (
        AND target_member.user_id = ?
     WHERE target_member.status IS NULL OR target_member.status != 'member';
     `
+	CHECK_USER_GROUP_STATUS = "SELECT status FROM group_members WHERE group_id = ? AND user_id = ?"
 )
 
 type Group struct {
@@ -115,6 +116,18 @@ func CheckGroupMembership(groupID, userID int) (bool, error) {
 		return false, err
 	}
 	return count > 0, nil
+}
+
+func GetUserGroupStatus(groupID, userID int) (string, error) {
+	var status string
+	err := database.DB.QueryRow(CHECK_USER_GROUP_STATUS, groupID, userID).Scan(&status)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", nil
+		}
+		return "", err
+	}
+	return status, nil
 }
 
 func InsertGroup(title, description string, creatorID int) (int64, error) {

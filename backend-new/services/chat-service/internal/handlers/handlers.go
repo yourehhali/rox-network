@@ -1,12 +1,11 @@
 package handlers
 
 import (
-	repository "social-network/services/chat-service/internal/repository"
 	"encoding/json"
 	"log"
 	"net/http"
-	"social-network/pkg/models"
 	sharedRepo "social-network/pkg/repository"
+	repository "social-network/services/chat-service/internal/repository"
 	"strconv"
 	"time"
 
@@ -14,6 +13,8 @@ import (
 )
 
 var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
 		return true
 	},
@@ -155,148 +156,7 @@ func handleGroupMessage(senderID int, msg map[string]interface{}) {
 }
 
 // NotificationWebSocket handles notification connections
-func NotificationWebSocket(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Printf("Notif Upgrade error: %v", err)
-		return
-	}
 
-	cookie, err := r.Cookie("session")
-	var userID int
-	var sessionToken string
-
-	if err == nil {
-		sessionToken = cookie.Value
-		userID, _ = sharedRepo.GetUserIDBySessionToken(sessionToken)
-	}
-
-	// If no cookie or invalid, try query param?
-	if userID == 0 {
-		token := r.URL.Query().Get("session")
-		if token != "" {
-			sessionToken = token
-			userID, _ = sharedRepo.GetUserIDBySessionToken(token)
-		}
-	}
-
-	if userID == 0 {
-		conn.Close()
-		return
-	}
-
-	repository.AddNotificationClient(userID, sessionToken, conn)
-	log.Printf("User %d connected to Notifications (Session: %s)", userID, sessionToken)
-	defer repository.RemoveNotificationClient(userID, sessionToken, conn)
-
-	// Send unread notifications immediately
-	unreads, _ := repository.GetUnreadNotifications(userID)
-	for _, n := range unreads {
-		conn.WriteJSON(n)
-	}
-
-	// Keep alive / Read loop
-	for {
-		if _, _, err := conn.NextReader(); err != nil {
-			break
-		}
-	}
-}
-
-// HandleInternalNotification handles POST /internal/notification
-func HandleInternalNotification(w http.ResponseWriter, r *http.Request) {
-	var n models.Notification
-	if err := json.NewDecoder(r.Body).Decode(&n); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
-		return
-	}
-
-	// If type is notification_removed, just broadcast and return (don't save to DB)
-	if n.Type == "notification_removed" {
-		// Also remove from DB
-		if n.ID != 0 {
-			_ = repository.DeleteNotificationByID(n.ID)
-		} else if n.Message != "" && n.GroupID != 0 {
-			_ = repository.DeleteNotificationByType(n.UserID, n.SenderID, n.GroupID, n.Message)
-		}
-
-		for _, conn := range repository.GetNotificationClients(n.UserID) {
-			conn.WriteJSON(n)
-		}
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-
-	// Save to DB
-	// If it's an acceptance/rejection of a follow request, update the original request notification
-	if n.Type == "Invitation_friendships" && (n.Message == "accepted" || n.Message == "rejected") {
-		// The sender of this "accepted" notification is the one who accepted (Receiver of original request)
-		// The user_id of this notification is the one receiving the "accepted" msg (Sender of original request)
-		// Wait, we want to update the notification that was shown to the person who *received* the request.
-		// Let's look at user-service RequestFollow:
-		// input.SenderID is the one who asked to follow. receiverID is the one accepting.
-		// Notification sent: UserID=input.SenderID (requester), SenderID=receiverID (accepter).
-
-		// But we ALSO need to update the notification for the *accepter* so the "Accept/Reject" buttons go away?
-		// Actually, the "Accept/Reject" UI usually depends on the list of *pending* requests.
-		// If the user-service `RequestFollow` updates the DB status to 'accepted', the pending list logic (fetching from DB) should handle it.
-		// However, the `notifications` table in chat-service might still show the "request" notification.
-		// We should mark the "request" notification for the *accepter* as handled.
-
-		// The `n` here is the notification being sent to the *Requester* saying "You were accepted".
-		// We want to update the notification that was sent to the *Accepter* (n.SenderID) from the *Requester* (n.UserID).
-		// So we update: UserID = n.SenderID, SenderID = n.UserID.
-		_ = repository.UpdateInvitationStatus(n.SenderID, n.UserID, n.Message)
-	}
-
-	id, err := repository.InsertNotification(n)
-	if err != nil {
-		log.Printf("Error saving notification: %v", err)
-		http.Error(w, "DB Error", http.StatusInternalServerError)
-		return
-	}
-	n.ID = int(id)
-
-	// Enrich with Sender info if missing (though sender usually sends ID)
-	if n.Sender.Username == "" {
-		sender, _ := sharedRepo.GetBasicUserInfo(n.SenderID)
-		if sender != nil {
-			n.Sender = *sender
-		}
-	}
-	// Enrich with timestamps
-	n.CreatedAt = time.Now().Format(time.RFC3339)
-
-	// Send to WebSocket
-	for _, conn := range repository.GetNotificationClients(n.UserID) {
-		conn.WriteJSON(n)
-	}
-
-	w.WriteHeader(http.StatusOK)
-}
-
-// GetNotifications returns unread notifications (HTTP API)
-func GetNotifications(w http.ResponseWriter, r *http.Request) {
-	// Need userID from context or cookie
-	cookie, err := r.Cookie("session")
-	var userID int
-	if err == nil {
-		userID, _ = sharedRepo.GetUserIDBySessionToken(cookie.Value)
-	}
-	if userID == 0 {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-
-	notifications, err := repository.GetUnreadNotifications(userID)
-	if err != nil {
-		http.Error(w, "Server error", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(notifications)
-}
 
 // GetPrivateChatHistory returns chat history between two users
 func GetPrivateChatHistory(w http.ResponseWriter, r *http.Request) {

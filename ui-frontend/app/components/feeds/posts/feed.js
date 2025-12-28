@@ -59,7 +59,7 @@ export default function PostsFeed({ userId: propUserId, posts: propPosts, endpoi
           endpoint = `/GetCUser/?id=${uid}`;
         }
 
-        const res = await apiFetch(endpoint);
+        const res = await apiFetch(endpoint, { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
           const mappedPosts = (data || []).map(post => {

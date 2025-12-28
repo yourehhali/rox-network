@@ -8,3 +8,8 @@
     min-height: 100vh;
     margin: 0 auto;
 }
+@media (max-width: 1200px) {
+    .main >:nth-child(2) {
+       margin-right: 80px;
+    }
+}

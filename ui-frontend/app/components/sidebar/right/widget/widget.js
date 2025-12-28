@@ -23,7 +23,6 @@ export default function Widget() {
   };
 
   useEffect(() => {
-    if (!open) return;
     const load = async () => {
       try {
         const res = await apiFetch("/notifications");
@@ -103,16 +102,31 @@ export default function Widget() {
         wsRef.current = null;
       }
     };
-  }, [open]);
+  }, []);
 
   const removeLocally = (notifToRemove) => {
+    // Optimistic update
     setNotifications((prev) => prev.filter((n) => n !== notifToRemove));
+    
+    // Call backend to mark as read
+    if (notifToRemove.id) {
+      apiFetch("/notifications/read", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notification_id: notifToRemove.id })
+      }).catch(err => console.error("Failed to mark notification as read", err));
+    }
   };
 
   return (
     <div className={style.widget}>
       <div className={style.notifications} onClick={() => setOpen((v)=>!v)}>
         <Bell/>
+        {notifications.length > 0 && (
+          <span className={style.notificationBadge}>
+            {notifications.length > 9 ? "9+" : notifications.length}
+          </span>
+        )}
       </div>
       <div
         className={style.userAvatar}

@@ -19,13 +19,8 @@ func main() {
 
 	// Routes
 	http.HandleFunc("/chat/ws", handlers.ChatWebSocket)
-	http.HandleFunc("/ws", handlers.NotificationWebSocket)
-	http.HandleFunc("/notifications", handlers.GetNotifications)
 	http.HandleFunc("/chat/private/history", handlers.GetPrivateChatHistory)
 	http.HandleFunc("/chat/group/history", handlers.GetGroupChatHistory)
-
-	// Internal API (Not exposed by Gateway)
-	http.HandleFunc("/internal/notification", handlers.HandleInternalNotification)
 
 	port := ":8085"
 	fmt.Printf("Chat Service running on %s\n", port)
