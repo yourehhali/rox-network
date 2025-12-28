@@ -4,6 +4,7 @@ import { apiFetch } from "../../../../lib/api";
 import styles from "./CreatePostModal.module.css";
 import { X } from "../../icons";
 import { useAuth } from "../../../../context/AuthContext";
+import { useToast } from "@/context/ToastContext";
 
 export default function CreatePostModal({ onClose, onSuccess, groupId = null }) {
   const { user } = useAuth();
@@ -15,7 +16,8 @@ export default function CreatePostModal({ onClose, onSuccess, groupId = null }) 
   const [followers, setFollowers] = useState([]);
   const [loadingFollowers, setLoadingFollowers] = useState(false);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);  
+   const { addToast } = useToast();
 
   useEffect(() => {
     if (!groupId && privacy === "2" && user?.id) {
@@ -168,7 +170,14 @@ export default function CreatePostModal({ onClose, onSuccess, groupId = null }) 
                 <label style={{ color: "#aaa", fontSize: "0.9rem" }}>Privacy</label>
                 <select
                   value={privacy}
-                  onChange={(e) => setPrivacy(e.target.value)}
+                  onChange={(e) => {
+                    if (e.target.value < 3 && e.target.value >= 0) {
+                      setPrivacy(e.target.value)
+                    } else {
+                         addToast("HOWA ", "error");
+                    }
+
+                  }}  
                   className={styles.select}
                 >
                   <option value="0">Public</option>

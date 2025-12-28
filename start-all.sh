@@ -26,7 +26,7 @@ echo "Migrations Path: $MIGRATIONS_PATH"
 
 # Start services
 echo "Starting Auth Service (8081)..."
-go run services/auth-service/cmd/api/main.go &
+# go run services/auth-service/cmd/api/main.go &
 
 echo "Starting User Service (8082)..."
 go run services/user-service/cmd/api/main.go &

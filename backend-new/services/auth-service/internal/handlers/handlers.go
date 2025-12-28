@@ -104,7 +104,14 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	age, _ := strconv.Atoi(r.FormValue("age"))
 
 	// === Handle Avatar Upload ===
-	file, handler, err := r.FormFile("avatar")
+	file, handler, err := r.FormFile("avatar") 
+	kb := 1024;
+	mb := 1024 * kb;
+
+	if (handler.Size > int64(15*mb)) {
+		http.Error(w, `{"status":"error","message":"Invalid avatar SIZE MAX 15mb "}`, http.StatusBadRequest) 
+		return
+	} 
 	var avatarPath string
 	if err == nil {
 		defer file.Close()

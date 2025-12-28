@@ -131,9 +131,8 @@ export default function Widget() {
         <div className={style.notificationsPanel}>
           {notifications.length === 0 ? (
             <div className={style.notificationItem}>No notifications</div>
-          ) : notifications.map((n, idx) => {
-            const key = n.id || `notif-${idx}`;
-            
+          ) : notifications.map((n, idx) => { 
+            const key = n.id || `notif-${idx}`; 
             if (n.type === "Invitation_friendships" || n.type === "new_follower") {
               return (
                 <FollowRequest

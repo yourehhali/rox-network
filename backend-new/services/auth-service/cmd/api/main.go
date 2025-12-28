@@ -18,16 +18,17 @@ func main() {
 	dbPath := os.Getenv("DB_PATH")
 	if dbPath == "" {
 		dbPath = "../../database/social.db"
-	}
-	database.InitDB(dbPath)
+	} 
+
+	database.InitDB("/home/soubaaiss/Desktop/rox-network/backend-new/database/social.db")
 	fmt.Println("Auth Service connected to database at", dbPath)
 
 	// Run Migrations
 	migrationsPath := os.Getenv("MIGRATIONS_PATH")
 	if migrationsPath == "" {
-		migrationsPath = "pkg/db/migrations/sqlite"
+		migrationsPath = "home/soubaaiss/Desktop/rox-network/backend-new/pkg/db/migrations/sqlite"
 	}
-	if err := database.RunMigrations(database.DB, migrationsPath); err != nil {
+	if err := database.RunMigrations(database.DB, "/home/soubaaiss/Desktop/rox-network/backend-new/pkg/db/migrations/sqlite"); err != nil {
 		log.Printf("Warning: Failed to run migrations: %v", err)
 	} else {
 		fmt.Println("Database migrations applied successfully.")
