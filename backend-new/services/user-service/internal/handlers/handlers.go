@@ -58,6 +58,7 @@ func Profile(w http.ResponseWriter, r *http.Request) {
 
 	isPending, _ := repository.IsPending(viewerID, targetUserID)
 	isFollowing, _ := repository.IsFollowing(viewerID, targetUserID)
+	isMyFollower, _ := repository.IsFollowing(targetUserID, viewerID)
 	postsCount, _ := repository.GetUserPostsCount(targetUserID)
 
 	response := struct {
@@ -67,6 +68,7 @@ func Profile(w http.ResponseWriter, r *http.Request) {
 		IsFriend       bool        `json:"isfriend"`
 		IsPending      bool        `json:"p"` // matching frontend expectation "p"
 		HasPosts       bool        `json:"has_posts"`
+		IsMyFollower   bool        `json:"ismyfollower"`
 	}{
 		User:           userData,
 		FollowersCount: followersCount,
@@ -74,6 +76,7 @@ func Profile(w http.ResponseWriter, r *http.Request) {
 		IsFriend:       isFollowing,
 		IsPending:      isPending,
 		HasPosts:       postsCount > 0,
+		IsMyFollower:   isMyFollower,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -88,7 +91,7 @@ type FollowResponse struct {
 	Following      bool   `json:"following"`
 	Status         string `json:"status"`
 	FollowersCount int    `json:"followers_Count"`
-	FollowingCount int    `json:"following_Count"` // Note: Frontend might expect this casing
+	FollowingCount int    `json:"following_Count"`
 }
 
 func SetFollowers(w http.ResponseWriter, r *http.Request) {
@@ -219,7 +222,7 @@ func RequestFollow(w http.ResponseWriter, r *http.Request) {
 	var err error
 	if input.Status == "accept" {
 		err = repository.UpdateFollowStatus(input.SenderID, receiverID, "accepted")
-		
+
 	} else { // reject
 		err = repository.RemoveFollow(input.SenderID, receiverID)
 	}
@@ -353,10 +356,23 @@ func UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	u.FirstName = r.FormValue("first_name")
 	u.LastName = r.FormValue("last_name")
 
+	if !utils.ValidName(u.FirstName) || !utils.ValidName(u.LastName) {
+		http.Error(w, "Invalid first or last name", http.StatusBadRequest)
+		return
+	}
+
 	nick := r.FormValue("nickname")
+	if nick != "" && !utils.ValidName(nick) {
+		http.Error(w, "Invalid nickname", http.StatusBadRequest)
+		return
+	}
 	u.Nickname = &nick
 
 	about := r.FormValue("about")
+	if !utils.ValidProfileAbout(about) {
+		http.Error(w, "About section too long", http.StatusBadRequest)
+		return
+	}
 	u.About = &about
 
 	isPrivateStr := r.FormValue("is_private")
@@ -367,6 +383,13 @@ func UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	file, handler, err := r.FormFile("avatar")
 	if err == nil {
 		defer file.Close()
+
+		kb := 1024
+		mb := 1024 * kb
+		if handler.Size > int64(15*mb) {
+			http.Error(w, `{"status":"error","message":"Invalid avatar SIZE MAX 15mb "}`, http.StatusBadRequest)
+			return
+		}
 
 		if !utils.IsAllowedImageExtension(handler.Filename) {
 			http.Error(w, "Invalid avatar file type. Allowed: .jpg, .jpeg, .png, .gif, .webp", http.StatusBadRequest)

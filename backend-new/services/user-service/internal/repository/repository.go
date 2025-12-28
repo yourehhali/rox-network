@@ -6,7 +6,6 @@ import (
 	"social-network/pkg/models"
 )
 
-// Queries
 const (
 	SELECT_USER_BY_ID = `
     SELECT id, username, email, first_name, last_name, age, gender, 
@@ -24,7 +23,6 @@ const (
 	CHECK_PRIVACY          = `SELECT is_private FROM users WHERE id = ?`
 	UPDATE_USER_INFO       = `UPDATE users SET first_name = ?, last_name = ?, nickname = ?, about = ?, avatar = ?, is_private = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
 	COUNT_USER_POSTS       = `SELECT COUNT(*) FROM posts WHERE user_id = ?`
-	// Suggestion queries, etc. can be added here
 )
 
 func UpdateUserInfo(userID int, u models.User) error {
@@ -106,12 +104,6 @@ func IsPending(followerID, followedID int) (bool, error) {
 	var count int
 	err := database.DB.QueryRow(CHECK_PENDING, followerID, followedID).Scan(&count)
 	return count > 0, err
-}
-
-func ToggleFollow(followerID, followedID int) (string, error) {
-	// Logic to check if following, if so unfollow, else follow (check privacy)
-	// This is simplified, actual logic in handler calls repository primitive ops
-	return "", nil
 }
 
 // AddFollow inserts a follow request
@@ -255,7 +247,6 @@ func GetAllUsers(currentUserID int) ([]models.Sugg, error) {
 			return nil, err
 		}
 
-		// Check if following or self
 		isFollowing, _ := IsFollowing(currentUserID, u.UserID)
 		if currentUserID == u.UserID || isFollowing {
 			continue

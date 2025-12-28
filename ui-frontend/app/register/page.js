@@ -115,6 +115,7 @@ export default function RegisterPage() {
                 value={formData.first_name}
                 onChange={handleChange}
                 required
+                maxLength={50}
               />
             </div>
             <div className={style.inputContainer}>
@@ -128,6 +129,7 @@ export default function RegisterPage() {
                 value={formData.last_name}
                 onChange={handleChange}
                 required
+                maxLength={50}
               />
             </div>
             <div className={style.inputContainer}>
@@ -141,6 +143,8 @@ export default function RegisterPage() {
                 value={formData.username}
                 onChange={handleChange}
                 required
+                minLength={3}
+                maxLength={32}
               />
             </div>
             <div className={style.inputContainer}>
@@ -207,6 +211,7 @@ export default function RegisterPage() {
                 className={style.input}
                 value={formData.nickname}
                 onChange={handleChange}
+                maxLength={50}
               />
             </div>
             <div className={style.inputContainer}>
@@ -231,6 +236,7 @@ export default function RegisterPage() {
                 className={style.textarea}
                 value={formData.about_me}
                 onChange={handleChange}
+                maxLength={500}
               />
             </div>
             <div className={style.inputContainerLarge}>

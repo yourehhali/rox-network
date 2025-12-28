@@ -144,6 +144,7 @@ export default function SettingsPage() {
               onChange={handleChange}
               className={styles.input}
               placeholder="First Name"
+              maxLength={50}
             />
           </div>
 
@@ -155,6 +156,7 @@ export default function SettingsPage() {
               onChange={handleChange}
               className={styles.input}
               placeholder="Last Name"
+              maxLength={50}
             />
           </div>
 
@@ -166,6 +168,7 @@ export default function SettingsPage() {
               onChange={handleChange}
               className={styles.input}
               placeholder="Nickname"
+              maxLength={50}
             />
           </div>
 
@@ -177,6 +180,7 @@ export default function SettingsPage() {
               onChange={handleChange}
               className={styles.textarea}
               placeholder="Tell us about yourself..."
+              maxLength={500}
             />
           </div>
 

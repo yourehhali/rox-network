@@ -22,6 +22,7 @@ func main() {
 
 	// Routes
 	mux.HandleFunc("/Createpost", middleware.AuthMiddleware(handlers.CreatePost))
+	mux.HandleFunc("/GetPost", middleware.AuthMiddleware(handlers.GetPost))
 	mux.HandleFunc("/getposts", middleware.AuthMiddleware(handlers.GetPosts))
 	mux.HandleFunc("/GetCUser/", middleware.AuthMiddleware(handlers.GetPostsByUser))
 	mux.HandleFunc("/reactions", middleware.AuthMiddleware(handlers.Reaction))

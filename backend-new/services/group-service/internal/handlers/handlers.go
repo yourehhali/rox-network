@@ -44,6 +44,15 @@ func CreateGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !utils.ValidGroupName(req.Title) {
+		http.Error(w, "Invalid group name", http.StatusBadRequest)
+		return
+	}
+	if !utils.ValidGroupDescription(req.Description) {
+		http.Error(w, "Invalid group description", http.StatusBadRequest)
+		return
+	}
+
 	groupID, err := repository.InsertGroup(req.Title, req.Description, userID)
 	if err != nil {
 		http.Error(w, "Server error", http.StatusInternalServerError)
@@ -99,7 +108,7 @@ func RequestJoin(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	err := repository.InsertGroupMember(req.GroupID, userID, "requested")
+	err := repository.InsertGroupMember(req.GroupID, userID, "pending")
 	if err != nil {
 		http.Error(w, "Server error", http.StatusInternalServerError)
 		return
@@ -120,7 +129,7 @@ func RequestJoin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"status": "requested"})
+	json.NewEncoder(w).Encode(map[string]string{"status": "pending"})
 }
 
 // AcceptRejectJoin handles join request decisions
@@ -287,6 +296,13 @@ func CreateGroupPost(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		defer file.Close()
 
+		kb := 1024
+		mb := 1024 * kb
+		if handler.Size > int64(15*mb) {
+			http.Error(w, `{"status":"error","message":"Invalid file SIZE MAX 15mb "}`, http.StatusBadRequest)
+			return
+		}
+
 		if !utils.IsAllowedImageExtension(handler.Filename) {
 			http.Error(w, "Invalid file type. Allowed: .jpg, .jpeg, .png, .gif, .webp", http.StatusBadRequest)
 			return
@@ -321,12 +337,25 @@ func GetGroupPosts(w http.ResponseWriter, r *http.Request) {
 	groupIDStr := r.URL.Query().Get("group_id")
 	groupID, _ := strconv.Atoi(groupIDStr)
 
-	posts, err := repository.GetGroupPosts(groupID)
+	cursorStr := r.URL.Query().Get("cursor")
+	limitStr := r.URL.Query().Get("limit")
+
+	cursor, _ := strconv.Atoi(cursorStr)
+
+	limit, _ := strconv.Atoi(limitStr)
+	if limit < 1 {
+		limit = 10
+	}
+
+	posts, err := repository.GetGroupPosts(groupID, limit, cursor)
 	if err != nil {
 		http.Error(w, "Server error", http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
+	if posts == nil {
+		posts = []repository.GroupPost{}
+	}
 	json.NewEncoder(w).Encode(posts)
 }
 
@@ -486,10 +515,22 @@ func GetGroupEvents(w http.ResponseWriter, r *http.Request) {
 	groupIDStr := r.URL.Query().Get("group_id")
 	groupID, _ := strconv.Atoi(groupIDStr)
 
-	events, err := repository.GetGroupEvents(groupID, userID)
+	cursorStr := r.URL.Query().Get("cursor")
+	limitStr := r.URL.Query().Get("limit")
+
+	cursor, _ := strconv.Atoi(cursorStr)
+	limit, _ := strconv.Atoi(limitStr)
+	if limit < 1 {
+		limit = 10
+	}
+
+	events, err := repository.GetGroupEvents(groupID, userID, limit, cursor)
 	if err != nil {
 		http.Error(w, "Server error", http.StatusInternalServerError)
 		return
+	}
+	if events == nil {
+		events = []repository.Event{}
 	}
 	json.NewEncoder(w).Encode(events)
 }

@@ -98,6 +98,9 @@
 .commentContent,
 .postFooter {
     position: relative;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
     z-index: 5;
     padding: 16px 30px;
 }

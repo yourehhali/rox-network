@@ -79,6 +79,7 @@ func main() {
 			userProxy.ServeHTTP(w, r)
 
 		case path == "/Createpost" ||
+			path == "/GetPost" ||
 			path == "/getposts" ||
 			strings.HasPrefix(path, "/GetCUser/") ||
 			strings.HasPrefix(path, "/posts/") ||

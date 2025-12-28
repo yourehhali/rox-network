@@ -76,8 +76,13 @@ export default function GroupPage() {
               {joinState === "member" ? (
                  <span className={styles.memberBadge}>✓ Member</span>
               ) : (
-                <button onClick={join} className={styles.joinBtn}>
-                  {joinState ? `Status: ${joinState}` : "Join Group"}
+                <button 
+                  onClick={join} 
+                  className={styles.joinBtn}
+                  disabled={joinState === "requested" || joinState === "pending"}
+                  style={{ opacity: (joinState === "requested" || joinState === "pending") ? 0.7 : 1 }}
+                >
+                  {(joinState === "requested" || joinState === "pending") ? "Pending" : "Join Group"}
                 </button>
               )}
             </div>

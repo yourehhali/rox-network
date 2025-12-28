@@ -7,10 +7,11 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"social-network/services/post-service/internal/repository"
 	"social-network/pkg/database"
 	"social-network/pkg/middleware"
+	"social-network/pkg/models"
 	"social-network/pkg/utils"
+	"social-network/services/post-service/internal/repository"
 	"strconv"
 	"strings"
 	"time"
@@ -35,6 +36,17 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 
 	title := r.FormValue("title")
 	content := r.FormValue("content")
+
+	if !utils.ValidPost(content) {
+		http.Error(w, "Invalid post content length", http.StatusBadRequest)
+		return
+	}
+	// Title is optional in some contexts, but if present enforce limits
+	if title != "" && !utils.ValidPostTitle(title) {
+		http.Error(w, "Invalid title length", http.StatusBadRequest)
+		return
+	}
+
 	privacyStr := r.FormValue("privacy")
 	privacy, _ := strconv.Atoi(privacyStr) // Default to 0 if error or empty
 
@@ -48,6 +60,12 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	file, handler, err := r.FormFile("image")
 	if err == nil {
 		defer file.Close()
+		kb := 1024
+		mb := 1024 * kb
+		if handler.Size > int64(15*mb) {
+			http.Error(w, `{"status":"error","message":"Invalid file SIZE MAX 15mb "}`, http.StatusBadRequest)
+			return
+		}
 
 		if !utils.IsAllowedImageExtension(handler.Filename) {
 			http.Error(w, "Invalid file type. Allowed: .jpg, .jpeg, .png, .gif, .webp", http.StatusBadRequest)
@@ -92,6 +110,39 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func GetPost(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	idStr := r.URL.Query().Get("id")
+	if idStr == "" {
+		http.Error(w, "Missing id", http.StatusBadRequest)
+		return
+	}
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid id", http.StatusBadRequest)
+		return
+	}
+
+	viewerID, ok := r.Context().Value(middleware.UserIDKey).(int)
+	if !ok {
+		viewerID = 0
+	}
+
+	post, err := repository.GetPostDetails(id, viewerID)
+	if err != nil {
+		http.Error(w, "Not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(post)
+}
+
 func GetPosts(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -103,13 +154,26 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	posts, err := repository.GetAllPosts(userID)
+	cursorStr := r.URL.Query().Get("cursor")
+	limitStr := r.URL.Query().Get("limit")
+
+	cursor, _ := strconv.Atoi(cursorStr) // Defaults to 0
+
+	limit, _ := strconv.Atoi(limitStr)
+	if limit < 1 {
+		limit = 10
+	}
+
+	posts, err := repository.GetAllPosts(userID, limit, cursor)
 
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
+	if posts == nil {
+		posts = []models.Posts{} // Ensure empty array json
+	}
 	if err := json.NewEncoder(w).Encode(posts); err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
@@ -134,18 +198,31 @@ func GetPostsByUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	cursorStr := r.URL.Query().Get("cursor")
+	limitStr := r.URL.Query().Get("limit")
+
+	cursor, _ := strconv.Atoi(cursorStr)
+
+	limit, _ := strconv.Atoi(limitStr)
+	if limit < 1 {
+		limit = 10
+	}
+
 	viewerID, ok := r.Context().Value(middleware.UserIDKey).(int)
 	if !ok {
 		viewerID = 0
 	}
 
-	posts, err := repository.GetUserPosts(userID, viewerID)
+	posts, err := repository.GetUserPosts(userID, viewerID, limit, cursor)
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	if posts == nil {
+		posts = []models.Posts{} // Ensure empty array json
+	}
 	if err := json.NewEncoder(w).Encode(posts); err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
@@ -287,6 +364,11 @@ func SubmitComment(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		if content != "" && !utils.ValidComment(content) {
+			http.Error(w, "Invalid comment length", http.StatusBadRequest)
+			return
+		}
+
 		id, err := repository.AddComment(userID, postID, content, imagePath)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -303,7 +385,15 @@ func SubmitComment(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(comment)
 
 	case http.MethodGet:
-		comments, err := repository.GetCommentsByPostID(postID)
+		cursorStr := r.URL.Query().Get("cursor")
+		limitStr := r.URL.Query().Get("limit")
+		cursor, _ := strconv.Atoi(cursorStr)
+		limit, _ := strconv.Atoi(limitStr)
+		if limit < 1 {
+			limit = 10
+		}
+
+		comments, err := repository.GetCommentsByPostID(postID, limit, cursor)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

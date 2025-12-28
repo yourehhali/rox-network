@@ -54,6 +54,8 @@ export default function CreateEventModal({ groupId, onSuccess, onClose }) {
             onChange={(e) => setTitle(e.target.value)}
             required
             className={styles.input}
+            minLength={3}
+            maxLength={50}
           />
           <textarea
             placeholder="Description"
@@ -61,6 +63,7 @@ export default function CreateEventModal({ groupId, onSuccess, onClose }) {
             onChange={(e) => setDesc(e.target.value)}
             required
             className={styles.textarea}
+            maxLength={500}
           />
           <input
             type="datetime-local"

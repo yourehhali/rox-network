@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { apiFetch, toMediaUrl } from "../../../../lib/api";
 import { useAuth } from "../../../../context/AuthContext";
 
-export default function OpenPost({ postId: propPostId, onClose, postData, endpoints }) {
+export default function OpenPost({ postId: propPostId, onClose, postData, endpoints, onUpdatePost }) {
   const { user } = useAuth();
   const postId = propPostId || postData?.id;
   
@@ -15,6 +15,9 @@ export default function OpenPost({ postId: propPostId, onClose, postData, endpoi
 
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
+  const [commentCursor, setCommentCursor] = useState(0);
+  const [hasMoreComments, setHasMoreComments] = useState(true);
+  const [loadingComments, setLoadingComments] = useState(false);
   const [bgClass, setBgClass] = useState("");
   const [newComment, setNewComment] = useState("");
   const [commentImage, setCommentImage] = useState(null);
@@ -22,6 +25,47 @@ export default function OpenPost({ postId: propPostId, onClose, postData, endpoi
   const [dislikeCount, setDislikeCount] = useState(0);
   const [userReaction, setUserReaction] = useState(null);
   const fileInputRef = useRef(null);
+
+  const loadComments = async (cursor = 0, reset = false) => {
+    if (loadingComments && !reset) return;
+    setLoadingComments(true);
+    try {
+        const res = await apiFetch(`${commentsUrl}?cursor=${cursor}&limit=10`);
+        if (res.ok) {
+            const data = await res.json();
+            const newComments = Array.isArray(data) ? data : [];
+            
+            if (reset) {
+                setComments(newComments);
+            } else {
+                setComments(prev => {
+                    // Filter duplicates just in case
+                    const existingIds = new Set(prev.map(c => c.id));
+                    const uniqueNew = newComments.filter(c => !existingIds.has(c.id));
+                    return [...prev, ...uniqueNew];
+                });
+            }
+            
+            if (newComments.length < 10) {
+                setHasMoreComments(false);
+            } else {
+                setHasMoreComments(true);
+            }
+        }
+    } catch (e) {
+        console.error("Failed to load comments", e);
+    } finally {
+        setLoadingComments(false);
+    }
+  };
+
+  const handleLoadMoreComments = () => {
+    if (loadingComments) return;
+    const lastComment = comments[comments.length - 1];
+    const nextCursor = lastComment ? lastComment.id : 0;
+    setCommentCursor(nextCursor);
+    loadComments(nextCursor, false);
+  };
 
   useEffect(() => {
     if (postData) {
@@ -41,7 +85,7 @@ export default function OpenPost({ postId: propPostId, onClose, postData, endpoi
         // Fallback fetch
         const fetchPost = async () => {
             try {
-                const res = await apiFetch(`/posts/${postId}`); // Assuming this endpoint exists
+                const res = await apiFetch(`/posts/${postId}`, { cache: "no-store" }); // Assuming this endpoint exists
                 if (res.ok) {
                     const data = await res.json();
                     setPost(data);
@@ -75,23 +119,34 @@ export default function OpenPost({ postId: propPostId, onClose, postData, endpoi
     const loadData = async () => {
         try {
             // 1. Fetch Comments
-            const cRes = await apiFetch(`/posts/${postId}/comments`);
-            if (cRes.ok) {
-                const cData = await cRes.json();
-                setComments(Array.isArray(cData) ? cData : []);
-            }
+            setComments([]);
+            setCommentCursor(0);
+            setHasMoreComments(true);
+            await loadComments(0, true);
 
-            // 2. Fetch Reaction Status (and fresh counts) if possible
-            // The backend /reactions endpoint is POST for toggle, but usually we get status with the post.
-            // If postData didn't have userReaction, we might not know it. 
-            // However, let's assume for now we start neutral or use what's in postData if extended.
-            // Actually, we can just fetch the post details again to get accurate counts and user reaction if the endpoint supports it.
-            // Based on repository.go SELECT_ALL_POSTS, it returns user_reaction.
-            // Let's try to fetch the single post to get reaction state if postData is missing it.
-            // Or just proceed.
+            // 2. Fetch Fresh Post Details (for reaction state)
+            const pRes = await apiFetch(`/GetPost?id=${postId}`, { cache: "no-store" });
+            if (pRes.ok) {
+                const pData = await pRes.json();
+                if (pData) {
+                    setLikesCount(pData.likes_count || 0);
+                    setDislikeCount(pData.dislikes_count || 0);
+                    setUserReaction(pData.userReaction || null); // null if no reaction
+                    
+                    // Update parent if data changed
+                    if (onUpdatePost) {
+                         onUpdatePost({
+                             ...postData,
+                             likesCount: pData.likes_count || 0,
+                             dislikeCount: pData.dislikes_count || 0,
+                             userReaction: pData.userReaction || null
+                         });
+                    }
+                }
+            }
             
         } catch (e) {
-            console.error("Failed to load comments", e);
+            console.error("Failed to load data", e);
         }
     };
     loadData();
@@ -124,16 +179,23 @@ export default function OpenPost({ postId: propPostId, onClose, postData, endpoi
     setLikesCount(newLikes);
     setDislikeCount(newDislikes);
     setUserReaction(newReaction);
+    
+    // Notify parent optimistically (optional, but good for responsiveness)
+    if (onUpdatePost) {
+        onUpdatePost({
+            ...postData,
+            likesCount: newLikes,
+            dislikeCount: newDislikes,
+            userReaction: newReaction
+        });
+    }
 
     try {
         if (!submitReactionUrl) return;
 
         const body = { reaction: type };
         if (endpoints?.submitReaction) {
-            body.group_post_id = postId; // Assuming group post endpoint expects this
-            // Or if generic, we might need to adjust body structure based on endpoint
-            // For now, let's assume the endpoint handles "post_id" or we pass "post_id"
-            // If it's a group post, we might want to send "post_id" as the ID.
+            body.group_post_id = postId; 
             body.post_id = postId; 
         } else {
              body.post_id = postId;
@@ -148,16 +210,42 @@ export default function OpenPost({ postId: propPostId, onClose, postData, endpoi
             setLikesCount(data.likes_count);
             setDislikeCount(data.dislikes_count);
             setUserReaction(data.userReaction || null);
+            
+            // Notify parent with confirmed data
+            if (onUpdatePost) {
+                onUpdatePost({
+                    ...postData,
+                    likesCount: data.likes_count,
+                    dislikeCount: data.dislikes_count,
+                    userReaction: data.userReaction || null
+                });
+            }
         } else {
             // Revert on error
             setLikesCount(oldLikes);
             setDislikeCount(oldDislikes);
             setUserReaction(oldReaction);
+            if (onUpdatePost) {
+                onUpdatePost({
+                    ...postData,
+                    likesCount: oldLikes,
+                    dislikeCount: oldDislikes,
+                    userReaction: oldReaction
+                });
+            }
         }
     } catch (e) {
         setLikesCount(oldLikes);
         setDislikeCount(oldDislikes);
         setUserReaction(oldReaction);
+        if (onUpdatePost) {
+            onUpdatePost({
+                ...postData,
+                likesCount: oldLikes,
+                dislikeCount: oldDislikes,
+                userReaction: oldReaction
+            });
+        }
     }
   };
 
@@ -183,11 +271,9 @@ export default function OpenPost({ postId: propPostId, onClose, postData, endpoi
             setCommentImage(null);
             if (fileInputRef.current) fileInputRef.current.value = "";
 
-            const cRes = await apiFetch(`/posts/${postId}/comments`);
-            if (cRes.ok) {
-                const cData = await cRes.json();
-                setComments(Array.isArray(cData) ? cData : []);
-            }
+            setCommentCursor(0);
+            setHasMoreComments(true);
+            await loadComments(0, true);
         }
     } catch (e) {
         console.error("Failed to submit comment", e);
@@ -260,6 +346,7 @@ export default function OpenPost({ postId: propPostId, onClose, postData, endpoi
                     placeholder="Write a comment ..."
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
+                    maxLength={1000}
                 ></textarea>
                 <div className={style.formActions}>
                     <input 
@@ -296,6 +383,26 @@ export default function OpenPost({ postId: propPostId, onClose, postData, endpoi
             )}
         </div>
       ))}
+
+      {hasMoreComments && (
+        <div style={{ textAlign: "center", padding: "10px" }}>
+            <button 
+                onClick={handleLoadMoreComments} 
+                disabled={loadingComments}
+                style={{
+                    padding: "8px 16px",
+                    borderRadius: "20px",
+                    border: "none",
+                    background: "#e4e6eb",
+                    cursor: loadingComments ? "default" : "pointer",
+                    fontWeight: "600",
+                    color: "#050505"
+                }}
+            >
+                {loadingComments ? "Loading..." : "Load more comments"}
+            </button>
+        </div>
+      )}
     </div>
   );
 }

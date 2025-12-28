@@ -138,8 +138,8 @@
 }
 
 .editButton {
-    background: #333;
-    color: white;
+    background: #F3FFAB;
+    color: black;
 }
 
 .followButton {
@@ -154,20 +154,20 @@
 }
 
 .inviteButton {
-    background: #333;
-    color: #F3FFAB;
-    border: 1px solid #F3FFAB;
-}
-
-.privacyButton {
-    background: #333;
-    color: #F3FFAB;
-    border: 1px solid #F3FFAB;
-}
-.privacyButton.public {
     background: #F3FFAB;
     color: black;
     border: none;
+}
+
+.privacyButton {
+    background: #F3FFAB;
+    color: black;
+    border: none;
+}
+.privacyButton.public {
+    background: #333;
+    color: #F3FFAB;
+    border: 1px solid #F3FFAB;
 }
 
 .editButton:hover, .followButton:hover, .inviteButton:hover, .privacyButton:hover {

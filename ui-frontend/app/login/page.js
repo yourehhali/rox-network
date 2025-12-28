@@ -80,6 +80,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                maxLength={254}
               />
             </div>
             <div className={style.inputContainerLarge}>
@@ -93,6 +94,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                maxLength={72}
               />
             </div>
             <div className={style.buttons}>

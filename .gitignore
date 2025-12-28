@@ -6,3 +6,4 @@ node_modules/
 social.db
 # local db
 forum.db 
+social-network.db

@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"social-network/services/auth-service/internal/repository"
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
@@ -13,6 +12,7 @@ import (
 	"path/filepath"
 	sharedRepo "social-network/pkg/repository"
 	"social-network/pkg/utils"
+	"social-network/services/auth-service/internal/repository"
 	"strconv"
 	"strings"
 	"time"
@@ -68,7 +68,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(time.Hour),
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
-		Path:     "/", // Important for cookie to be sent to all paths
+		Path:     "/",
 	})
 	err = sharedRepo.UpdateUserSession(userId, session)
 	if err != nil {
@@ -104,16 +104,16 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	age, _ := strconv.Atoi(r.FormValue("age"))
 
 	// === Handle Avatar Upload ===
-	file, handler, err := r.FormFile("avatar") 
-	kb := 1024;
-	mb := 1024 * kb;
+	file, handler, err := r.FormFile("avatar")
+	kb := 1024
+	mb := 1024 * kb
 
 	var avatarPath string
 	if err == nil {
-		if (handler.Size > int64(15*mb)) {
-			http.Error(w, `{"status":"error","message":"Invalid avatar SIZE MAX 15mb "}`, http.StatusBadRequest) 
+		if handler.Size > int64(15*mb) {
+			http.Error(w, `{"status":"error","message":"Invalid avatar SIZE MAX 15mb "}`, http.StatusBadRequest)
 			return
-		} 
+		}
 		defer file.Close()
 
 		if !utils.IsAllowedImageExtension(handler.Filename) {
@@ -151,6 +151,14 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	// === Validation ===
 	if !utils.ValidUsername(username) || !utils.ValidName(firstName) || !utils.ValidName(lastName) {
 		http.Error(w, `{"status":"error","message":"Invalid username or name"}`, http.StatusBadRequest)
+		return
+	}
+	if nickname != "" && !utils.ValidName(nickname) {
+		http.Error(w, `{"status":"error","message":"Invalid nickname"}`, http.StatusBadRequest)
+		return
+	}
+	if !utils.ValidProfileAbout(about) {
+		http.Error(w, `{"status":"error","message":"About section too long"}`, http.StatusBadRequest)
 		return
 	}
 	if !utils.ValidEmail(email) {

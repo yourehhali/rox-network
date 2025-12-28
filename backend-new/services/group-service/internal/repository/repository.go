@@ -42,7 +42,9 @@ var (
 		FROM group_posts gp
 		JOIN users u ON gp.creator_id = u.id
 		WHERE gp.group_id = ?
+		  AND (? = 0 OR gp.id < ?)
 		ORDER BY gp.created_at DESC
+		LIMIT ?
 	`
 	INSERT_EVENT = `
 		INSERT INTO events (title, description, creator_id, group_id, event_time)
@@ -56,6 +58,9 @@ var (
 		FROM events e
 		LEFT JOIN event_members em ON e.id = em.event_id AND em.user_id = ?
 		WHERE e.group_id = ?
+		  AND (? = 0 OR e.id < ?)
+		ORDER BY e.event_time ASC
+		LIMIT ?
 	`
 	SELECT_GROUPS_FOR_INVITE = `
     SELECT g.id, g.title, g.description, g.creator_id, COALESCE(target_member.status, 'none') as invite_status
@@ -257,8 +262,8 @@ func GetGroupPostByID(postID int) (*GroupPost, error) {
 	return &p, nil
 }
 
-func GetGroupPosts(groupID int) ([]GroupPost, error) {
-	rows, err := database.DB.Query(SELECT_GROUP_POSTS, groupID)
+func GetGroupPosts(groupID, limit, cursor int) ([]GroupPost, error) {
+	rows, err := database.DB.Query(SELECT_GROUP_POSTS, groupID, cursor, cursor, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -308,8 +313,8 @@ func UpdateEventMemberStatus(eventID, userID int, status string) error {
 	return err
 }
 
-func GetGroupEvents(groupID, userID int) ([]Event, error) {
-	rows, err := database.DB.Query(SELECT_GROUP_EVENTS, userID, groupID)
+func GetGroupEvents(groupID, userID, limit, cursor int) ([]Event, error) {
+	rows, err := database.DB.Query(SELECT_GROUP_EVENTS, userID, groupID, cursor, cursor, limit)
 	if err != nil {
 		return nil, err
 	}

@@ -11,3 +11,18 @@
     flex-direction: column;
     gap: 16px;
 }
+
+.loadMoreBtn {
+    background: transparent;
+    color: #F3FFAB;
+    border: 1px solid #F3FFAB;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+    align-self: center;
+}
+
+.loadMoreBtn:hover {
+    background: rgba(243, 255, 171, 0.1);
+}

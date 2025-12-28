@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	sharedRepo "social-network/pkg/repository"
+	"social-network/pkg/utils"
 	repository "social-network/services/chat-service/internal/repository"
 	"strconv"
 	"time"
@@ -91,6 +92,10 @@ func handlePrivateMessage(senderID int, msg map[string]interface{}) {
 	content, _ := msg["content"].(string)
 	isEmoji, _ := msg["is_emoji"].(bool)
 
+	if !utils.ValidChatMessage(content) {
+		return
+	}
+
 	canChat, _ := repository.CanUsersChat(senderID, receiverID)
 	if !canChat {
 		return
@@ -126,6 +131,10 @@ func handleGroupMessage(senderID int, msg map[string]interface{}) {
 	content, _ := msg["content"].(string)
 	isEmoji, _ := msg["is_emoji"].(bool)
 
+	if !utils.ValidChatMessage(content) {
+		return
+	}
+
 	// Verify membership
 	isMember, err := repository.IsUserGroupMember(senderID, groupID)
 	if err != nil || !isMember {
@@ -156,7 +165,6 @@ func handleGroupMessage(senderID int, msg map[string]interface{}) {
 }
 
 // NotificationWebSocket handles notification connections
-
 
 // GetPrivateChatHistory returns chat history between two users
 func GetPrivateChatHistory(w http.ResponseWriter, r *http.Request) {

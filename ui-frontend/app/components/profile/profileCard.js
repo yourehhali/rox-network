@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { apiFetch, toMediaUrl } from "../../../lib/api";
 import { useAuth } from "../../../context/AuthContext";
-import { Mail,Cake,User } from "../icons";
+import { Mail, Cake, User } from "../icons";
 import UserListModal from "./userListModal";
 import InviteGroupModal from "./InviteGroupModal";
 export default function ProfileCard() {
@@ -46,11 +46,11 @@ export default function ProfileCard() {
           age: u.age || "",
           followers: data.followers_count || 0,
           following: data.following_count || 0,
+          ismyfollower: !!data.ismyfollower,
         });
         setIsPrivate(!!u.is_private);
         setFollowState({ following: !!data.isfriend, pending: !!data.p });
       } catch (e) {
-        // ignore
       } finally {
         setLoading(false);
       }
@@ -84,15 +84,15 @@ export default function ProfileCard() {
   const handlePrivacyToggle = async () => {
     const newVal = !isPrivate;
     try {
-        const res = await apiFetch("/update-privacy", {
-            method: "POST",
-            body: JSON.stringify({ is_private: newVal ? 1 : 0 })
-        });
-        if (res.ok) {
-            setIsPrivate(newVal);
-        }
-    } catch(e) {
-        console.error("Failed to update privacy", e);
+      const res = await apiFetch("/update-privacy", {
+        method: "POST",
+        body: JSON.stringify({ is_private: newVal ? 1 : 0 }),
+      });
+      if (res.ok) {
+        setIsPrivate(newVal);
+      }
+    } catch (e) {
+      console.error("Failed to update privacy", e);
     }
   };
 
@@ -122,7 +122,7 @@ export default function ProfileCard() {
     : followState.following
     ? "Unfollow"
     : "Follow";
-  // Don't show follow button if it's my own profile
+
   const isMyProfile = user && user.id === profile.id;
 
   return (
@@ -148,59 +148,69 @@ export default function ProfileCard() {
                 <div className={style.actions}>
                   {!isMyProfile && (
                     <>
+                      <button
+                        className={`${style.followButton} ${
+                          followState.following ? style.unfollowButton : ""
+                        }`}
+                        onClick={handleToggleFollow}
+                      >
+                        {followLabel}
+                      </button>
+                      {ismyfollower && (
                         <button
-                          className={`${style.followButton} ${
-                            followState.following ? style.unfollowButton : ""
-                          }`}
-                          onClick={handleToggleFollow}
+                          className={style.inviteButton}
+                          onClick={() => setModalType("invite")}
                         >
-                          {followLabel}
+                          Invite to Group
                         </button>
-                        <button
-                            className={style.inviteButton}
-                            onClick={() => setModalType("invite")}
-                        >
-                            Invite to Group
-                        </button>
+                      )}
                     </>
                   )}
                   {isMyProfile && (
-                     <button
-                       className={`${style.privacyButton} ${!isPrivate ? style.public : ""}`}
-                       onClick={handlePrivacyToggle}
-                     >
-                       {isPrivate ? "Private" : "Public"}
-                     </button>
+                    <button
+                      className={`${style.privacyButton} ${
+                        !isPrivate ? style.public : ""
+                      }`}
+                      onClick={handlePrivacyToggle}
+                    >
+                      {isPrivate ? "Private" : "Public"}
+                    </button>
                   )}
                 </div>
               </div>
             </div>
             <div className={style.bottom}>
               <div className={style.contact}>
-                {profile.email && (
+                {profile.email && followState.following &&(
                   <div className={style.contactItem}>
-                    <Mail size={16} color="white"/> <div>{profile.email}</div>
+                    <Mail size={16} color="white" /> <div>{profile.email}</div>
                   </div>
                 )}
 
-                {profile.age && (
+                {profile.age && followState.following && (
                   <div className={style.contactItem}>
-                    <Cake size={16} color="white"/> <div>{profile.age} yo</div>
+                    <Cake size={16} color="white" /> <div>{profile.age} yo</div>
                   </div>
                 )}
 
-                {profile.gender && (
+                {profile.gender && followState.following && (
                   <div className={style.contactItem}>
-                    <User size={16} color="white"/> <div>{profile.gender}</div>
+                    <User size={16} color="white" /> <div>{profile.gender}</div>
                   </div>
                 )}
               </div>
               <div className={style.stats}>
-                <div className={style.statItem} onClick={() => setModalType("followers")}>
+                <div
+                  className={style.statItem}
+                  onClick={() => followState.following && setModalType("followers")}
+                >
                   <div className={style.statValue}>{profile.followers}</div>
                   <div className={style.statLabel}>Followers</div>
                 </div>
-                <div className={style.statItem} onClick={() => setModalType("following")}>
+                <div
+                  className={style.statItem}
+                  onClick={() => followState.following && setModalType("following")}
+                >
                   <div className={style.statValue}>{profile.following}</div>
                   <div className={style.statLabel}>Following</div>
                 </div>
@@ -209,21 +219,21 @@ export default function ProfileCard() {
           </div>
         </div>
       </div>
-      
+
       {modalType === "invite" && (
-        <InviteGroupModal 
-            userId={profile.id} 
-            onClose={() => setModalType(null)} 
+        <InviteGroupModal
+          userId={profile.id}
+          onClose={() => setModalType(null)}
         />
       )}
-      
+
       {/* Reusing UserListModal for followers/following if implemented */}
       {modalType && modalType !== "invite" && (
-          <UserListModal
-             type={modalType}
-             userId={profile.id}
-             onClose={() => setModalType(null)}
-          />
+        <UserListModal
+          type={modalType}
+          userId={profile.id}
+          onClose={() => setModalType(null)}
+        />
       )}
     </div>
   );

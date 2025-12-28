@@ -220,6 +220,7 @@ export default function ChatPage() {
                 value={input} 
                 onChange={(e)=>setInput(e.target.value)} 
                 placeholder="Type a message..." 
+                maxLength={2000}
               />
               <button onClick={sendMessage}>Send</button>
             </div>

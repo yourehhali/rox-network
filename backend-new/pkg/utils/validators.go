@@ -7,7 +7,6 @@ import (
 	"strings"
 )
 
-// Constants moved from repository/global.go
 const (
 	EMAIL_MIN_LEN = 6
 	EMAIL_MAX_LEN = 254
@@ -22,10 +21,23 @@ const (
 	TITLE_MAX_LEN = 70
 
 	POST_MIN_LEN = 1
-	POST_MAX_LEN = 10_000
+	POST_MAX_LEN = 5000
 
 	COMMENT_MIN_LEN = 1
-	COMMENT_MAX_LEN = 1_000
+	COMMENT_MAX_LEN = 500
+
+	NAME_MIN_LEN = 1
+	NAME_MAX_LEN = 50
+
+	CHAT_MSG_MIN_LEN = 1
+	CHAT_MSG_MAX_LEN = 250
+
+	GROUP_NAME_MIN_LEN = 3
+	GROUP_NAME_MAX_LEN = 50
+
+	GROUP_DESC_MAX_LEN = 500
+
+	ABOUT_MAX_LEN = 500
 )
 
 var (
@@ -54,7 +66,7 @@ func InitRegex() {
 }
 
 func ValidName(s string) bool {
-	if len(s) < 1 || len(s) > 50 {
+	if len(s) < NAME_MIN_LEN || len(s) > NAME_MAX_LEN {
 		return false
 	}
 	if NameExp == nil {
@@ -67,7 +79,6 @@ func ValidUsername(s string) bool {
 	if len(s) < USERNAME_MIN_LEN || len(s) > USERNAME_MAX_LEN {
 		return false
 	}
-	// Ensure regex is initialized
 	if UsernameExp == nil {
 		InitRegex()
 	}
@@ -98,6 +109,22 @@ func ValidPost(content string) bool {
 
 func ValidPostTitle(title string) bool {
 	return len(title) >= TITLE_MIN_LEN && len(title) <= TITLE_MAX_LEN
+}
+
+func ValidChatMessage(content string) bool {
+	return len(content) >= CHAT_MSG_MIN_LEN && len(content) <= CHAT_MSG_MAX_LEN
+}
+
+func ValidGroupName(name string) bool {
+	return len(name) >= GROUP_NAME_MIN_LEN && len(name) <= GROUP_NAME_MAX_LEN
+}
+
+func ValidGroupDescription(desc string) bool {
+	return len(desc) <= GROUP_DESC_MAX_LEN
+}
+
+func ValidProfileAbout(about string) bool {
+	return len(about) <= ABOUT_MAX_LEN
 }
 
 func IsAllowedImageExtension(filename string) bool {

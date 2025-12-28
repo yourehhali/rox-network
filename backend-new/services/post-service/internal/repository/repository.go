@@ -18,6 +18,17 @@ var (
         JOIN users u ON p.user_id = u.id
         WHERE p.id = ?
 	`
+	SELECT_POST_DETAILS = `
+        SELECT DISTINCT p.id, p.user_id, u.username, u.first_name || ' ' || u.last_name AS full_name,
+               p.title, p.content, p.image_path, p.created_at, p.updated_at,
+               (SELECT COUNT(*) FROM reactions r WHERE r.post_id = p.id AND r.reaction_type='like') AS likes_count,
+               (SELECT COUNT(*) FROM reactions r WHERE r.post_id = p.id AND r.reaction_type='dislike') AS dislikes_count,
+               (SELECT reaction_type FROM reactions r WHERE r.post_id = p.id AND r.user_id = ?) AS user_reaction,
+               p.privacy
+        FROM posts p
+        JOIN users u ON p.user_id = u.id
+        WHERE p.id = ?
+    `
 	SELECT_ALL_POSTS = `
         SELECT DISTINCT p.id, p.user_id, u.username, u.first_name || ' ' || u.last_name AS full_name,
                p.title, p.content, p.image_path, p.created_at, p.updated_at,
@@ -30,11 +41,13 @@ var (
         LEFT JOIN followers f ON f.followed_id = p.user_id AND f.follower_id = ? AND f.status = 'accepted'
         LEFT JOIN post_viewers pv ON pv.post_id = p.id AND pv.user_id = ?
         WHERE 
-           p.user_id = ? 
+           (p.user_id = ? 
            OR (p.privacy = 0 AND (u.is_private = 0 OR f.id IS NOT NULL))
            OR (p.privacy = 1 AND f.id IS NOT NULL) 
-           OR (p.privacy = 2 AND pv.id IS NOT NULL)
+           OR (p.privacy = 2 AND pv.id IS NOT NULL))
+           AND (? = 0 OR p.id < ?)
         ORDER BY p.created_at DESC
+        LIMIT ?
     `
 	SELECT_USER_POSTS = `
         SELECT DISTINCT p.id, p.user_id, u.username, u.first_name || ' ' || u.last_name AS full_name,
@@ -54,7 +67,9 @@ var (
              OR (p.privacy = 1 AND f.id IS NOT NULL) 
              OR (p.privacy = 2 AND pv.id IS NOT NULL)
           )
+          AND (? = 0 OR p.id < ?)
         ORDER BY p.created_at DESC
+        LIMIT ?
     `
 	SELECT_COMMENT_BY_ID = `SELECT c.id, c.user_id, c.post_id, c.content, c.created_at, c.image_url, u.username, u.avatar 
 		 FROM comments c 
@@ -64,7 +79,9 @@ var (
 		 FROM comments c 
 		 JOIN users u ON c.user_id = u.id 
 		 WHERE c.post_id = ? 
-		 ORDER BY c.created_at DESC`
+		 AND (? = 0 OR c.id < ?)
+		 ORDER BY c.created_at DESC
+		 LIMIT ?`
 	SELECT_REACTION = "SELECT reaction_type FROM reactions WHERE user_id = ? AND post_id = ?"
 	INSERT_REACTION = "INSERT INTO reactions (user_id, post_id, reaction_type) VALUES (?, ?, ?)"
 	DELETE_REACTION = "DELETE FROM reactions WHERE user_id = ? AND post_id = ?"
@@ -128,8 +145,28 @@ func GetAddedPost(id int) (*models.Posts, error) {
 	return &post, nil
 }
 
-func GetAllPosts(viewerID int) ([]models.Posts, error) {
-	rows, err := database.DB.Query(SELECT_ALL_POSTS, viewerID, viewerID, viewerID, viewerID)
+func GetPostDetails(postID, viewerID int) (*models.Posts, error) {
+	var p models.Posts
+	var userReaction sql.NullString
+
+	err := database.DB.QueryRow(SELECT_POST_DETAILS, viewerID, postID).Scan(
+		&p.ID, &p.UserID, &p.UserName, &p.FullName,
+		&p.Title, &p.Content, &p.ImagePath, &p.CreatedAt, &p.UpdatedAt,
+		&p.LikesCount, &p.DislikesCount, &userReaction, &p.Privacy,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if userReaction.Valid {
+		p.UserReaction = &userReaction.String
+	} else {
+		p.UserReaction = nil
+	}
+	return &p, nil
+}
+
+func GetAllPosts(viewerID, limit, cursor int) ([]models.Posts, error) {
+	rows, err := database.DB.Query(SELECT_ALL_POSTS, viewerID, viewerID, viewerID, viewerID, cursor, cursor, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -160,8 +197,8 @@ func GetAllPosts(viewerID int) ([]models.Posts, error) {
 	return posts, nil
 }
 
-func GetUserPosts(targetUserID, viewerID int) ([]models.Posts, error) {
-	rows, err := database.DB.Query(SELECT_USER_POSTS, viewerID, viewerID, viewerID, targetUserID, viewerID)
+func GetUserPosts(targetUserID, viewerID, limit, cursor int) ([]models.Posts, error) {
+	rows, err := database.DB.Query(SELECT_USER_POSTS, viewerID, viewerID, viewerID, targetUserID, viewerID, cursor, cursor, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -224,8 +261,8 @@ func GetCommentByID(id int) (map[string]interface{}, error) {
 	}, nil
 }
 
-func GetCommentsByPostID(postID int) ([]map[string]interface{}, error) {
-	rows, err := database.DB.Query(SELECT_COMMENTS_BY_POST_ID, postID)
+func GetCommentsByPostID(postID, limit, cursor int) ([]map[string]interface{}, error) {
+	rows, err := database.DB.Query(SELECT_COMMENTS_BY_POST_ID, postID, cursor, cursor, limit)
 	if err != nil {
 		return nil, err
 	}
