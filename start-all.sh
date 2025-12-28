@@ -56,7 +56,7 @@ cd ..
 echo "Starting Frontend (3000)..."
 cd ui-frontend
 
-npm run dev &
+npm start &
 
 echo "All services started. Press Ctrl+C to stop."
 wait

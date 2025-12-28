@@ -108,7 +108,7 @@ func RequestJoin(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	err := repository.InsertGroupMember(req.GroupID, userID, "pending")
+	err := repository.InsertGroupMember(req.GroupID, userID, "requested")
 	if err != nil {
 		http.Error(w, "Server error", http.StatusInternalServerError)
 		return

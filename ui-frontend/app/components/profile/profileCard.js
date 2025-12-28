@@ -156,7 +156,7 @@ export default function ProfileCard() {
                       >
                         {followLabel}
                       </button>
-                      {ismyfollower && (
+                      {profile.ismyfollower && (
                         <button
                           className={style.inviteButton}
                           onClick={() => setModalType("invite")}
