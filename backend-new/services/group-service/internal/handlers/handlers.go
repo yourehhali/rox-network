@@ -335,8 +335,25 @@ func CreateGroupPost(w http.ResponseWriter, r *http.Request) {
 // GetGroupPosts retrieves posts for a group
 func GetGroupPosts(w http.ResponseWriter, r *http.Request) {
 	groupIDStr := r.URL.Query().Get("group_id")
+	if groupIDStr == "" {
+		http.Error(w, "Missing group_id", http.StatusBadRequest)
+		return
+	}
 	groupID, _ := strconv.Atoi(groupIDStr)
-
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	isMember, err := repository.CheckGroupMembership(groupID, userID)
+	if err != nil {
+		http.Error(w, "Server error", http.StatusInternalServerError)
+		return
+	}
+	if !isMember {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
 	cursorStr := r.URL.Query().Get("cursor")
 	limitStr := r.URL.Query().Get("limit")
 

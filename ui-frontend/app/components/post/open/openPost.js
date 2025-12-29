@@ -346,7 +346,7 @@ export default function OpenPost({ postId: propPostId, onClose, postData, endpoi
                     placeholder="Write a comment ..."
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
-                    maxLength={1000}
+                    maxLength={500}
                 ></textarea>
                 <div className={style.formActions}>
                     <input 

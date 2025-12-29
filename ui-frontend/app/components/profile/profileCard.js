@@ -73,7 +73,7 @@ export default function ProfileCard() {
       });
       setProfile((prev) =>
         prev
-          ? { ...prev, followers: data.followers_Count || prev.followers }
+          ? { ...prev, followers: data.followers_Count || 0, following: data.following_Count || 0 }
           : prev
       );
     } catch (e) {
@@ -181,19 +181,19 @@ export default function ProfileCard() {
             </div>
             <div className={style.bottom}>
               <div className={style.contact}>
-                {profile.email && followState.following &&(
+                {profile.email && (followState.following || !isPrivate || isMyProfile) &&(
                   <div className={style.contactItem}>
                     <Mail size={16} color="white" /> <div>{profile.email}</div>
                   </div>
                 )}
 
-                {profile.age && followState.following && (
+                {profile.age && (followState.following || !isPrivate || isMyProfile) && (
                   <div className={style.contactItem}>
                     <Cake size={16} color="white" /> <div>{profile.age} yo</div>
                   </div>
                 )}
 
-                {profile.gender && followState.following && (
+                {profile.gender && (followState.following || !isPrivate || isMyProfile) && (
                   <div className={style.contactItem}>
                     <User size={16} color="white" /> <div>{profile.gender}</div>
                   </div>
@@ -202,14 +202,14 @@ export default function ProfileCard() {
               <div className={style.stats}>
                 <div
                   className={style.statItem}
-                  onClick={() => followState.following && setModalType("followers")}
+                  onClick={() => (followState.following || !isPrivate || isMyProfile) && setModalType("followers")}
                 >
                   <div className={style.statValue}>{profile.followers}</div>
                   <div className={style.statLabel}>Followers</div>
                 </div>
                 <div
                   className={style.statItem}
-                  onClick={() => followState.following && setModalType("following")}
+                  onClick={() => (followState.following || !isPrivate || isMyProfile)  && setModalType("following")}
                 >
                   <div className={style.statValue}>{profile.following}</div>
                   <div className={style.statLabel}>Following</div>

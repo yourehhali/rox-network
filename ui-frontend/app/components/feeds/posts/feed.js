@@ -19,7 +19,7 @@ export default function PostsFeed({ userId: propUserId, posts: propPosts, endpoi
   const { user } = useAuth();
   const [locked, setLocked] = useState(false);
 
-  // Pagination state
+
   const [cursor, setCursor] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -120,6 +120,9 @@ export default function PostsFeed({ userId: propUserId, posts: propPosts, endpoi
         } else {
             setHasMore(true);
         }
+      } else {
+        // If fetch failed (e.g. 403 Forbidden), stop trying to load more
+        setHasMore(false);
       }
     } catch (err) {
       console.error("Failed to fetch posts", err);

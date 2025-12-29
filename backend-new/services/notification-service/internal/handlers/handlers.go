@@ -77,6 +77,7 @@ func HandleInternalNotification(w http.ResponseWriter, r *http.Request) {
 
 		// Broadcast to user
 		for _, conn := range repository.GetNotificationClients(n.UserID) {
+			
 			conn.WriteJSON(n)
 		}
 

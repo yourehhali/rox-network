@@ -13,6 +13,8 @@ echo "Starting Backend Services..."
 
 cd backend-new
 
+mkdir -p database
+
 export DB_PATH=$(pwd)/database/social.db
 export MIGRATIONS_PATH=$(pwd)/pkg/db/migrations/sqlite
 export UPLOAD_DIR=$(pwd)/uploads
@@ -44,7 +46,7 @@ echo "Starting Group Service (8086)..."
 go run services/group-service/cmd/api/main.go &
 
 echo "Starting Notification Service (8087)..."
-go run services/notification-service/cmd/api/main.go &
+go run services/notification-service/cmd/api/main.go &          
 
 sleep 3
 
@@ -56,7 +58,7 @@ cd ..
 echo "Starting Frontend (3000)..."
 cd ui-frontend
 
-npm start &
+npm run dev &
 
 echo "All services started. Press Ctrl+C to stop."
 wait

@@ -15,7 +15,16 @@ func main() {
 	dbPath := os.Getenv("DB_PATH")
 	if dbPath == "" {
 		dbPath = "../../database/social.db"
-	} 
+	}
+	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
+		log.Printf("Warning: Database file %s does not exist. Creating it now.", dbPath)
+		if err := os.MkdirAll("../../database", 0755); err != nil {
+			log.Fatalf("Failed to create database directory: %v", err)
+		}
+		if _,err := os.Create(dbPath); err != nil {
+			log.Fatalf("Failed to create database file: %v", err)
+		}
+	}
 
 	database.InitDB(dbPath)
 	fmt.Println("Auth Service connected to database at", dbPath)

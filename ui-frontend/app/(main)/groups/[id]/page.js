@@ -114,22 +114,36 @@ export default function GroupPage() {
           <div className={styles.content}>
             {activeTab === "posts" && (
               <div>
-                 <div className={styles.postsList}>
-                    <PostsFeed 
-                        groupId={id}
-                        endpoints={{
-                            comments: null,
-                            submitComment: null,
-                            submitReaction: null
-                        }}
-                    />
-                 </div>
+                 {joinState === "member" ? (
+                    <div className={styles.postsList}>
+                        <PostsFeed 
+                            groupId={id}
+                            endpoints={{
+                                comments: null,
+                                submitComment: null,
+                                submitReaction: null
+                            }}
+                        />
+                    </div>
+                 ) : (
+                    <div style={{ textAlign: "center", padding: "40px", color: "#888" }}>
+                        <h3>Join the group to view posts</h3>
+                    </div>
+                 )}
               </div>
             )}
 
             {activeTab === "events" && (
-              <div className={styles.eventsList}>
-                <EventsFeed groupId={id} />
+              <div>
+                {joinState === "member" ? (
+                  <div className={styles.eventsList}>
+                    <EventsFeed groupId={id} />
+                  </div>
+                ) : (
+                  <div style={{ textAlign: "center", padding: "40px", color: "#888" }}>
+                    <h3>Join the group to view events</h3>
+                  </div>
+                )}
               </div>
             )}
 

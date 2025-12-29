@@ -142,7 +142,7 @@ export default function CreatePostModal({ onClose, onSuccess, groupId = null }) 
             onChange={(e) => setContent(e.target.value)}
             required
             className={styles.textarea}
-            maxLength={10000}
+            maxLength={2000}
           />
           
           <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>

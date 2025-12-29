@@ -45,6 +45,8 @@ export default function EventsFeed({ groupId }) {
                 return [...prev, ...uniqueNew];
             });
         }
+      } else {
+        setHasMore(false);
       }
     } catch (e) {
       console.error("Failed to fetch events", e);

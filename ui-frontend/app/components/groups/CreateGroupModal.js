@@ -78,7 +78,7 @@ export default function CreateGroupModal({ onSuccess, isOpen, onClose }) {
                 onChange={(e) => setDesc(e.target.value)}
                 required
                 className={styles.textarea}
-                maxLength={500}
+                maxLength={200}
               />
               <div className={styles.buttons}>
                 <button

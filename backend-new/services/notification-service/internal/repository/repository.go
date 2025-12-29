@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	NotificationClients = make(map[int]map[string]*websocket.Conn)
+	NotificationClients = make(map[int]map[string][]*websocket.Conn)
 	NotifMutex          sync.Mutex
 )
 
@@ -21,19 +21,22 @@ func AddNotificationClient(userID int, sessionID string, conn *websocket.Conn) {
 	NotifMutex.Lock()
 	defer NotifMutex.Unlock()
 	if _, ok := NotificationClients[userID]; !ok {
-		NotificationClients[userID] = make(map[string]*websocket.Conn)
+		NotificationClients[userID] = make(map[string][]*websocket.Conn)
 	}
-	NotificationClients[userID][sessionID] = conn
+	NotificationClients[userID][sessionID] = append(NotificationClients[userID][sessionID], conn)
 }
 
 func RemoveNotificationClient(userID int, sessionID string, conn *websocket.Conn) {
 	NotifMutex.Lock()
 	defer NotifMutex.Unlock()
 	if sessions, ok := NotificationClients[userID]; ok {
-		if currentConn, ok := sessions[sessionID]; ok {
-			if currentConn == conn {
-				currentConn.Close()
-				delete(sessions, sessionID)
+		if currentConns, ok := sessions[sessionID]; ok {
+			for i, currentConn := range currentConns {
+				if currentConn == conn {
+					currentConn.Close()
+					sessions[sessionID] = append(currentConns[:i], currentConns[i+1:]...)
+					break
+				}
 			}
 		}
 		if len(sessions) == 0 {
@@ -48,7 +51,7 @@ func GetNotificationClients(userID int) []*websocket.Conn {
 	var conns []*websocket.Conn
 	if sessions, ok := NotificationClients[userID]; ok {
 		for _, conn := range sessions {
-			conns = append(conns, conn)
+			conns = append(conns, conn...)
 		}
 	}
 	return conns

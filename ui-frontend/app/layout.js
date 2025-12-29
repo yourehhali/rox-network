@@ -1,12 +1,12 @@
 import "./globals.css";
-import { AuthProvider } from '../context/AuthContext';
 import { ToastProvider } from '../context/ToastContext';
-import { ChatProvider } from '../context/ChatContext';
+import { AuthProvider } from '../context/AuthContext';
 import { PostsProvider } from '../context/PostsContext';
+import { ChatProvider } from '../context/ChatContext';
 
 export const metadata = {
-  title: "Social UI Update",
-  description: "A social media user interface built with Next.js",
+  title: "Social Network",
+  description: "A social media web app built by zone01 talents for zone01 talents",
 };
 
 export default function RootLayout({ children }) {
