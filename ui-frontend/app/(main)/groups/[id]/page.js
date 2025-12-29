@@ -7,10 +7,19 @@ import PostsFeed from "@/app/components/feeds/posts/feed";
 import EventsFeed from "@/app/components/feeds/events/EventsFeed";
 import MemberCard from "@/app/components/groups/MemberCard";
 import { usePosts } from "@/context/PostsContext";
+import NotFound from "@/app/not-found";
 
-export default function GroupPage() {
+export default function GroupPage() { 
+  
   const params = useParams();
-  const id = parseInt(params.id, 10);
+  const isNum = /^\d+$/.test(params.id)
+
+  const id = parseInt(params.id, 10); 
+   
+  if (!id || !isNum) {
+    return <NotFound/>
+  }
+
   const { refreshTrigger } = usePosts();
   
   const [group, setGroup] = useState(null);
@@ -18,7 +27,7 @@ export default function GroupPage() {
   
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("posts");
-  const [joinState, setJoinState] = useState(null);
+  const [joinState, setJoinState] = useState(null); 
 
   const loadGroupData = async () => {
     try {
@@ -40,6 +49,7 @@ export default function GroupPage() {
       }
     } catch (e) {
       console.error(e);
+        
     }
     setLoading(false);
   };
@@ -61,8 +71,10 @@ export default function GroupPage() {
       }
     } catch (_) {}
   };
-
-  return (
+  if (!group) {
+    return <NotFound/> 
+  }
+  return ( 
     <div className={styles.middle}>
       {loading ? (
         <h2>Loading...</h2>

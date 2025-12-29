@@ -103,7 +103,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	about := r.FormValue("about")
 	age, _ := strconv.Atoi(r.FormValue("age"))
 
-	// === Handle Avatar Upload ===
+	
 	file, handler, err := r.FormFile("avatar")
 	kb := 1024
 	mb := 1024 * kb

@@ -6,7 +6,8 @@ import { apiFetch, toMediaUrl } from "../../../lib/api";
 import { useAuth } from "../../../context/AuthContext";
 import { Mail, Cake, User } from "../icons";
 import UserListModal from "./userListModal";
-import InviteGroupModal from "./InviteGroupModal";
+import InviteGroupModal from "./InviteGroupModal"; 
+import NotFound from "@/app/not-found";
 export default function ProfileCard() {
   const params = useSearchParams();
   const { user } = useAuth();
@@ -108,12 +109,7 @@ export default function ProfileCard() {
   }
   if (!profile) {
     return (
-      <div
-        className={style.profileCardContainer}
-        style={{ textAlign: "center", paddingTop: "50px" }}
-      >
-        No profile found
-      </div>
+      <NotFound/>
     );
   }
 
