@@ -3,17 +3,12 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
-	"io"
 	"log"
 	"net/http"
-	"os"
 	"social-network/pkg/middleware"
 	"social-network/pkg/models"
-	"social-network/pkg/utils"
 	"social-network/services/user-service/internal/repository"
 	"strconv"
-	"time"
 )
 
 func Profile(w http.ResponseWriter, r *http.Request) {
@@ -339,101 +334,7 @@ func UpdatePrivacy(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(res)
 }
-
-func UpdateProfile(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-
-	err := r.ParseMultipartForm(10 << 20)
-	if err != nil {
-		http.Error(w, "Error parsing form", http.StatusBadRequest)
-		return
-	}
-
-	var u models.User
-	u.FirstName = r.FormValue("first_name")
-	u.LastName = r.FormValue("last_name")
-
-	if !utils.ValidName(u.FirstName) || !utils.ValidName(u.LastName) {
-		http.Error(w, "Invalid first or last name", http.StatusBadRequest)
-		return
-	}
-
-	nick := r.FormValue("nickname")
-	if nick != "" && !utils.ValidName(nick) {
-		http.Error(w, "Invalid nickname", http.StatusBadRequest)
-		return
-	}
-	u.Nickname = &nick
-
-	about := r.FormValue("about")
-	if !utils.ValidProfileAbout(about) {
-		http.Error(w, "About section too long", http.StatusBadRequest)
-		return
-	}
-	u.About = &about
-
-	isPrivateStr := r.FormValue("is_private")
-	isPrivate, _ := strconv.Atoi(isPrivateStr)
-	u.IsPrivate = &isPrivate
-
-	
-	file, handler, err := r.FormFile("avatar")
-	if err == nil {
-		defer file.Close()
-
-		kb := 1024
-		mb := 1024 * kb
-		if handler.Size > int64(15*mb) {
-			http.Error(w, `{"status":"error","message":"Invalid avatar SIZE MAX 15mb "}`, http.StatusBadRequest)
-			return
-		}
-
-		if !utils.IsAllowedImageExtension(handler.Filename) {
-			http.Error(w, "Invalid avatar file type. Allowed: .jpg, .jpeg, .png, .gif, .webp", http.StatusBadRequest)
-			return
-		}
-
-		uploadDir := os.Getenv("UPLOAD_DIR")
-		if uploadDir == "" {
-			uploadDir = "../../uploads"
-		}
-		if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
-			os.MkdirAll(uploadDir, 0755)
-		}
-		filename := fmt.Sprintf("%d_%s", time.Now().Unix(), handler.Filename)
-		avatarPath := "uploads/" + filename
-		fullPath := uploadDir + "/" + filename
-
-		f, err := os.Create(fullPath)
-		if err != nil {
-			http.Error(w, "Cannot save image", http.StatusInternalServerError)
-			return
-		}
-		defer f.Close()
-		io.Copy(f, file)
-		u.Avatar = &avatarPath
-	} else {
-		
-		currentUser, err := repository.GetUserInfo(userID)
-		if err == nil {
-			u.Avatar = currentUser.Avatar
-		}
-	}
-
-	err = repository.UpdateUserInfo(userID, u)
-	if err != nil {
-		log.Printf("UpdateUserInfo error: %v\n", err)
-		http.Error(w, "Failed to update profile", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"message": "Profile updated successfully"})
-}
+ 
 
 func FollowersList(w http.ResponseWriter, r *http.Request) {
 	targetIDStr := r.URL.Query().Get("id")

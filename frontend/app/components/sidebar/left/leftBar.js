@@ -17,7 +17,6 @@ import {
   UserRound,
   UsersRound,
   MessageCircle,
-  Settings,
   LogOut,
 } from "../../icons";
 
@@ -161,13 +160,9 @@ export default function LeftBar() {
         </div>
 
         <div className={styles.bottomSection}>
-          <a className={styles.menuItem} onClick={() => navigateTo("/settings")}>
-            <Settings />
-          </a>
           <a className={styles.menuItem}
             onClick={() => handleLogout()}
           >
-            
             <LogOut />
           </a>
 
@@ -176,8 +171,7 @@ export default function LeftBar() {
               <Plus />
             </span>
           </div>
-          
-          {/* Choice Pill for Group Page */}
+
           {showGroupChoice && (
             <div className={styles.choicePill}>
               {pathname === "/groups" ? (
