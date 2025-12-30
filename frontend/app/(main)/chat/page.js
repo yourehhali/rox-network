@@ -10,7 +10,7 @@ import { Smile } from "../../components/icons";
 
 export default function ChatPage() {
   const { user } = useAuth();
-  const { sendMessage: sendWsMessage, subscribe } = useChat();
+  const { sendMessage: sendWsMessage, subscribe, refreshUnreadCount } = useChat();
   const { addToast } = useToast();
   const [friends, setFriends] = useState([]);
   const [groups, setGroups] = useState([]);
@@ -83,6 +83,9 @@ export default function ChatPage() {
            if (msg.sender_id === currentActive.id || msg.receiver_id === currentActive.id) {
               setMessages((prev) => [...prev, msg]);
               shouldScroll = true;
+              if (msg.sender_id === currentActive.id) {
+                 markPrivateRead(currentActive.id);
+              }
            }
         } else if (msg.type === "group_message" && currentActive.type === "group") {
            if (msg.group_id === currentActive.id) {
@@ -105,6 +108,13 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const markPrivateRead = async (senderId) => {
+    try {
+      await apiFetch(`/chat/private/read?sender_id=${senderId}`);
+      refreshUnreadCount();
+    } catch (_) {}
+  };
+
   const openChat = async (target) => {
     setActiveChat(target);
     setMessages([]);
@@ -116,6 +126,7 @@ export default function ChatPage() {
       let url = "";
       if (target.type === "private") {
         url = `/chat/private/history?user_id=${target.id}&limit=10&offset=0`;
+        markPrivateRead(target.id);
       } else if (target.type === "group") {
         url = `/chat/group/history?group_id=${target.id}&limit=10&offset=0`;
       }
