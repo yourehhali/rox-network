@@ -72,27 +72,28 @@ func ChatWebSocket(w http.ResponseWriter, r *http.Request) {
 		if err := conn.ReadJSON(&msg); err != nil {
 			break
 		}
-		handleChatMessage(userID, msg)
+		handleChatMessage(userID, msg, w)
 	}
 }
 
-func handleChatMessage(senderID int, msg map[string]interface{}) {
+func handleChatMessage(senderID int, msg map[string]interface{}, w http.ResponseWriter) {
 	msgType, _ := msg["type"].(string)
 	switch msgType {
 	case "private_message":
-		handlePrivateMessage(senderID, msg)
+		handlePrivateMessage(senderID, msg, w)
 	case "group_message":
-		handleGroupMessage(senderID, msg)
+		handleGroupMessage(senderID, msg, w)
 	}
 }
 
-func handlePrivateMessage(senderID int, msg map[string]interface{}) {
+func handlePrivateMessage(senderID int, msg map[string]interface{}, w http.ResponseWriter) {
 	receiverIDFloat, _ := msg["receiver_id"].(float64)
 	receiverID := int(receiverIDFloat)
 	content, _ := msg["content"].(string)
 	isEmoji, _ := msg["is_emoji"].(bool)
 
-	if !utils.ValidChatMessage(content) {
+	if !utils.ValidChatMessage(content) { 
+		http.Error(w, "message too long", http.StatusBadRequest) 
 		return
 	}
 
@@ -125,13 +126,14 @@ func handlePrivateMessage(senderID int, msg map[string]interface{}) {
 	}
 }
 
-func handleGroupMessage(senderID int, msg map[string]interface{}) {
+func handleGroupMessage(senderID int, msg map[string]interface{}, w http.ResponseWriter) {
 	groupIDFloat, _ := msg["group_id"].(float64)
 	groupID := int(groupIDFloat)
 	content, _ := msg["content"].(string)
 	isEmoji, _ := msg["is_emoji"].(bool)
-
-	if !utils.ValidChatMessage(content) {
+	 
+	if !utils.ValidChatMessage(content) { 
+		http.Error(w, "message too long", http.StatusBadRequest) 
 		return
 	}
 
