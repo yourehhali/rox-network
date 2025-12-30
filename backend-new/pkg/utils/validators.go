@@ -12,30 +12,30 @@ const (
 	EMAIL_MAX_LEN = 254
 
 	USERNAME_MIN_LEN = 3
-	USERNAME_MAX_LEN = 32
+	USERNAME_MAX_LEN = 14
 
 	PASSWORD_MIN_LEN = 8
 	PASSWORD_MAX_LEN = 72
 
 	TITLE_MIN_LEN = 10
-	TITLE_MAX_LEN = 70
+	TITLE_MAX_LEN = 50
 
 	POST_MIN_LEN = 1
-	POST_MAX_LEN = 2000
+	POST_MAX_LEN = 1000
 
 	COMMENT_MIN_LEN = 1
 	COMMENT_MAX_LEN = 500
 
 	NAME_MIN_LEN = 1
-	NAME_MAX_LEN = 50
+	NAME_MAX_LEN = 20
 
 	CHAT_MSG_MIN_LEN = 1
 	CHAT_MSG_MAX_LEN = 250
 
 	GROUP_NAME_MIN_LEN = 3
-	GROUP_NAME_MAX_LEN = 50
+	GROUP_NAME_MAX_LEN = 30
 
-	GROUP_DESC_MAX_LEN = 200
+	GROUP_DESC_MAX_LEN = 100
 
 	ABOUT_MAX_LEN = 500
 )
@@ -113,6 +113,14 @@ func ValidPostTitle(title string) bool {
 
 func ValidChatMessage(content string) bool {
 	return len(content) >= CHAT_MSG_MIN_LEN && len(content) <= CHAT_MSG_MAX_LEN
+}
+
+func ValidAge(age int) bool {
+	return age >= 14 && age <= 100
+}
+
+func ValidGender(gender string) bool {
+	return gender == "male" || gender == "female"
 }
 
 func ValidGroupName(name string) bool {

@@ -20,13 +20,14 @@ func Profile(w http.ResponseWriter, r *http.Request) {
 	// Current user ID from context (viewer)
 	viewerID, ok := r.Context().Value(middleware.UserIDKey).(int)
 	if !ok {
-		// handle missing context if needed, but middleware should ensure it
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"message": "Internal server error"})
+		return
 	}
 
 	var targetUserID int
 	userIDStr := r.URL.Query().Get("id")
 	if userIDStr == "" {
-		// If no ID provided, return current user's profile
 		targetUserID = viewerID
 	} else {
 		var err error

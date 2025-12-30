@@ -10,6 +10,10 @@ body {
 * {
   box-sizing: border-box;
   padding: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+  
   font-family: sans-serif;
   margin: 0;
 }

@@ -6,13 +6,15 @@ import { apiFetch, toMediaUrl } from "../../../lib/api";
 import { useAuth } from "../../../context/AuthContext";
 import { Mail, Cake, User } from "../icons";
 import UserListModal from "./userListModal";
-import InviteGroupModal from "./InviteGroupModal"; 
-import NotFound from "@/app/not-found";
+import InviteGroupModal from "./InviteGroupModal";
+import NotFound from "../../not-found";
+
 export default function ProfileCard() {
   const params = useSearchParams();
   const { user } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isNotFound, setIsNotFound] = useState(false);
   const [followState, setFollowState] = useState({
     following: false,
     pending: false,
@@ -52,6 +54,8 @@ export default function ProfileCard() {
         setIsPrivate(!!u.is_private);
         setFollowState({ following: !!data.isfriend, pending: !!data.p });
       } catch (e) {
+        setIsNotFound(true);
+        setProfile(null);
       } finally {
         setLoading(false);
       }
@@ -97,6 +101,10 @@ export default function ProfileCard() {
     }
   };
 
+  if (isNotFound) {
+    return <NotFound />;
+  }
+
   if (loading) {
     return (
       <div
@@ -108,9 +116,7 @@ export default function ProfileCard() {
     );
   }
   if (!profile) {
-    return (
-      <NotFound/>
-    );
+    return <NotFound />;
   }
 
   const followLabel = followState.pending

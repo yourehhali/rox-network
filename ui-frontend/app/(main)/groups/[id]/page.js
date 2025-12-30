@@ -7,7 +7,7 @@ import PostsFeed from "@/app/components/feeds/posts/feed";
 import EventsFeed from "@/app/components/feeds/events/EventsFeed";
 import MemberCard from "@/app/components/groups/MemberCard";
 import { usePosts } from "@/context/PostsContext";
-import NotFound from "@/app/not-found";
+import NotFound from "../../../not-found";
 
 export default function GroupPage() { 
   
@@ -27,7 +27,8 @@ export default function GroupPage() {
   
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("posts");
-  const [joinState, setJoinState] = useState(null); 
+  const [joinState, setJoinState] = useState(null);
+  const [isNotFound, setIsNotFound] = useState(false);
 
   const loadGroupData = async () => {
     try {
@@ -46,10 +47,12 @@ export default function GroupPage() {
         } else {
           setJoinState(null);
         }
+      } else {
+        setIsNotFound(true);
       }
     } catch (e) {
       console.error(e);
-        
+      setIsNotFound(true);
     }
     setLoading(false);
   };
@@ -71,10 +74,13 @@ export default function GroupPage() {
       }
     } catch (_) {}
   };
-  if (!group) {
-    return <NotFound/> 
+
+  if (isNotFound) {
+    setLoading(false);
+    return <NotFound />;
   }
-  return ( 
+
+  return (
     <div className={styles.middle}>
       {loading ? (
         <h2>Loading...</h2>

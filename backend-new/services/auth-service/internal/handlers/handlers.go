@@ -103,7 +103,6 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	about := r.FormValue("about")
 	age, _ := strconv.Atoi(r.FormValue("age"))
 
-	
 	file, handler, err := r.FormFile("avatar")
 	kb := 1024
 	mb := 1024 * kb
@@ -159,6 +158,14 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	}
 	if !utils.ValidProfileAbout(about) {
 		http.Error(w, `{"status":"error","message":"About section too long"}`, http.StatusBadRequest)
+		return
+	}
+	if !utils.ValidAge(age) {
+		http.Error(w, `{"status":"error","message":"Invalid age (must be 14-100)"}`, http.StatusBadRequest)
+		return
+	}
+	if !utils.ValidGender(gender) {
+		http.Error(w, `{"status":"error","message":"Invalid gender"}`, http.StatusBadRequest)
 		return
 	}
 	if !utils.ValidEmail(email) {

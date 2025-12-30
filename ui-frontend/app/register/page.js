@@ -48,6 +48,17 @@ export default function RegisterPage() {
         return;
     }
 
+    if (!["male", "female"].includes(formData.gender)) {
+        setError("Invalid gender selected");
+        return;
+    }
+
+    const ageVal = parseInt(formData.age, 10);
+    if (isNaN(ageVal) || ageVal < 14 || ageVal > 100) {
+        setError("Age must be between 14 and 100");
+        return;
+    }
+
     const data = new FormData();
     data.append('username', formData.username);
     data.append('first_name', formData.first_name);
@@ -115,7 +126,7 @@ export default function RegisterPage() {
                 value={formData.first_name}
                 onChange={handleChange}
                 required
-                maxLength={50}
+                maxLength={20}
               />
             </div>
             <div className={style.inputContainer}>
@@ -129,7 +140,7 @@ export default function RegisterPage() {
                 value={formData.last_name}
                 onChange={handleChange}
                 required
-                maxLength={50}
+                maxLength={20}
               />
             </div>
             <div className={style.inputContainer}>
@@ -144,7 +155,7 @@ export default function RegisterPage() {
                 onChange={handleChange}
                 required
                 minLength={3}
-                maxLength={32}
+                maxLength={14}
               />
             </div>
             <div className={style.inputContainer}>
@@ -173,6 +184,8 @@ export default function RegisterPage() {
                 value={formData.email}
                 onChange={handleChange}
                 required
+                minLength={6}
+                maxLength={254}
               />
             </div>
             <div className={style.inputContainer}>
@@ -186,6 +199,8 @@ export default function RegisterPage() {
                 value={formData.password}
                 onChange={handleChange}
                 required
+                minLength={8}
+                maxLength={72}
               />
             </div>
             <div className={style.inputContainer}>
@@ -199,6 +214,8 @@ export default function RegisterPage() {
                 value={formData.confirm_password}
                 onChange={handleChange}
                 required
+                minLength={8}
+                maxLength={72}
               />
             </div>
             <div className={style.inputContainer}>
@@ -225,6 +242,8 @@ export default function RegisterPage() {
                 value={formData.age}
                 onChange={handleChange}
                 required
+                min={14}
+                max={100}
               />
             </div>
             <div className={style.inputContainerLarge}>

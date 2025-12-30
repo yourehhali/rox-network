@@ -70,7 +70,7 @@ export default function CreateGroupModal({ onSuccess, isOpen, onClose }) {
                 required
                 className={styles.input}
                 minLength={3}
-                maxLength={50}
+                maxLength={30}
               />
               <textarea
                 placeholder="Description"
@@ -78,7 +78,7 @@ export default function CreateGroupModal({ onSuccess, isOpen, onClose }) {
                 onChange={(e) => setDesc(e.target.value)}
                 required
                 className={styles.textarea}
-                maxLength={200}
+                maxLength={100}
               />
               <div className={styles.buttons}>
                 <button

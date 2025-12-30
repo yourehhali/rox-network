@@ -134,7 +134,7 @@ export default function CreatePostModal({ onClose, onSuccess, groupId = null }) 
             required
             className={styles.input}
             minLength={10}
-            maxLength={70}
+            maxLength={50}
           />
           <textarea
             placeholder="What's on your mind?"
@@ -142,7 +142,7 @@ export default function CreatePostModal({ onClose, onSuccess, groupId = null }) 
             onChange={(e) => setContent(e.target.value)}
             required
             className={styles.textarea}
-            maxLength={2000}
+            maxLength={1000}
           />
           
           <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
