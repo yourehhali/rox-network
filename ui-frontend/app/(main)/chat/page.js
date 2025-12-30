@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useChat } from "@/context/ChatContext";
+import { useToast } from "@/context/ToastContext";
 import { apiFetch, toMediaUrl } from "@/lib/api";
 import style from "./chat.module.css";
 import EmojiPicker from "../../components/emoji/EmojiPicker";
@@ -10,6 +11,7 @@ import { Smile } from "../../components/icons";
 export default function ChatPage() {
   const { user } = useAuth();
   const { sendMessage: sendWsMessage, subscribe } = useChat();
+  const { addToast } = useToast();
   const [friends, setFriends] = useState([]);
   const [groups, setGroups] = useState([]);
   const [activeChat, setActiveChat] = useState(null);
@@ -59,8 +61,12 @@ export default function ChatPage() {
     };
     loadData();
     
-    // Subscribe to global chat messages
     const unsubscribe = subscribe((msg) => {
+        if (msg.type === "error") {
+            addToast(msg.message, "error");
+            return;
+        }
+
         const currentActive = activeChatRef.current;
         if (!currentActive) return;
 

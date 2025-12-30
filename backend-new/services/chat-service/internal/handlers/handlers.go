@@ -72,33 +72,40 @@ func ChatWebSocket(w http.ResponseWriter, r *http.Request) {
 		if err := conn.ReadJSON(&msg); err != nil {
 			break
 		}
-		handleChatMessage(userID, msg, w)
+		handleChatMessage(userID, msg, conn)
 	}
 }
 
-func handleChatMessage(senderID int, msg map[string]interface{}, w http.ResponseWriter) {
+func handleChatMessage(senderID int, msg map[string]interface{}, conn *websocket.Conn) {
 	msgType, _ := msg["type"].(string)
 	switch msgType {
 	case "private_message":
-		handlePrivateMessage(senderID, msg, w)
+		handlePrivateMessage(senderID, msg, conn)
 	case "group_message":
-		handleGroupMessage(senderID, msg, w)
+		handleGroupMessage(senderID, msg, conn)
 	}
 }
 
-func handlePrivateMessage(senderID int, msg map[string]interface{}, w http.ResponseWriter) {
+func handlePrivateMessage(senderID int, msg map[string]interface{}, conn *websocket.Conn) {
 	receiverIDFloat, _ := msg["receiver_id"].(float64)
 	receiverID := int(receiverIDFloat)
 	content, _ := msg["content"].(string)
 	isEmoji, _ := msg["is_emoji"].(bool)
 
-	if !utils.ValidChatMessage(content) { 
-		http.Error(w, "message too long", http.StatusBadRequest) 
+	if !utils.ValidChatMessage(content) {
+		conn.WriteJSON(map[string]interface{}{
+			"type":    "error",
+			"message": "Message too long (max 250 characters)",
+		})
 		return
 	}
 
 	canChat, _ := repository.CanUsersChat(senderID, receiverID)
 	if !canChat {
+		conn.WriteJSON(map[string]interface{}{
+			"type":    "error",
+			"message": "You cannot chat with this user",
+		})
 		return
 	}
 
@@ -126,21 +133,27 @@ func handlePrivateMessage(senderID int, msg map[string]interface{}, w http.Respo
 	}
 }
 
-func handleGroupMessage(senderID int, msg map[string]interface{}, w http.ResponseWriter) {
+func handleGroupMessage(senderID int, msg map[string]interface{}, conn *websocket.Conn) {
 	groupIDFloat, _ := msg["group_id"].(float64)
 	groupID := int(groupIDFloat)
 	content, _ := msg["content"].(string)
 	isEmoji, _ := msg["is_emoji"].(bool)
-	 
-	if !utils.ValidChatMessage(content) { 
-		http.Error(w, "message too long", http.StatusBadRequest) 
+
+	if !utils.ValidChatMessage(content) {
+		conn.WriteJSON(map[string]interface{}{
+			"type":    "error",
+			"message": "Message too long (max 250 characters)",
+		})
 		return
 	}
 
 	// Verify membership
 	isMember, err := repository.IsUserGroupMember(senderID, groupID)
 	if err != nil || !isMember {
-		log.Printf("User %d is not a member of group %d or error: %v", senderID, groupID, err)
+		conn.WriteJSON(map[string]interface{}{
+			"type":    "error",
+			"message": "You are not a member of this group",
+		})
 		return
 	}
 
