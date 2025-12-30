@@ -1,8 +1,6 @@
 package repository
 
 import (
-	"database/sql"
-	"log"
 	"social-network/pkg/database"
 	"social-network/pkg/models"
 	"sync"
@@ -26,35 +24,9 @@ var (
 		INSERT INTO messages (sender_id, receiver_id, group_id, content, is_emoji, created_at)
 		VALUES (?, ?, ?, ?, ?, ?)
 	`
-	INSERT_NOTIFICATION = `
-		INSERT INTO notifications (user_id, sender_id, type, message, group_id, event_id, state, created_at)
-		VALUES (?, ?, ?, ?, ?, ?, 'unread', ?)
-	`
-	CHECK_EXISTING_NOTIFICATION = `
-		SELECT id FROM notifications 
-		WHERE user_id = ? AND sender_id = ? AND type = ? 
-		AND (group_id = ? OR (group_id IS NULL AND ? = 0))
-		AND (event_id = ? OR (event_id IS NULL AND ? = 0))
-		AND state = 'unread'
-		LIMIT 1
-	`
-	SELECT_UNREAD_NOTIFICATIONS = `
-		SELECT 
-			n.id, n.user_id, n.type, n.message, n.state, n.event_id, n.created_at, 
-			u.id, u.username, u.first_name, u.last_name, u.avatar, u.is_private,
-			g.id, g.title
-		FROM notifications n
-		JOIN users u ON n.sender_id = u.id
-		LEFT JOIN groups g ON n.group_id = g.id
-		WHERE n.user_id = ? AND n.state = 'unread'
-		ORDER BY n.created_at DESC
-	`
-	UPDATE_NOTIFICATION_STATUS  = "UPDATE notifications SET state = ? WHERE id = ?"
-	UPDATE_INVITATION_STATUS    = "UPDATE notifications SET state = ? WHERE user_id = ? AND sender_id = ? AND type = 'Invitation_friendships' AND message = 'request'"
-	DELETE_NOTIFICATION_BY_TYPE = "DELETE FROM notifications WHERE user_id = ? AND sender_id = ? AND group_id = ? AND type = ?"
-	SELECT_GROUP_MEMBERS        = "SELECT user_id FROM group_members WHERE group_id = ? AND status = 'member'"
-	IS_USER_GROUP_MEMBER        = "SELECT COUNT(*) FROM group_members WHERE user_id = ? AND group_id = ? AND status = 'member'"
-	SELECT_PRIVATE_MESSAGES     = `
+	SELECT_GROUP_MEMBERS    = "SELECT user_id FROM group_members WHERE group_id = ? AND status = 'member'"
+	IS_USER_GROUP_MEMBER    = "SELECT COUNT(*) FROM group_members WHERE user_id = ? AND group_id = ? AND status = 'member'"
+	SELECT_PRIVATE_MESSAGES = `
 		SELECT m.id, m.sender_id, m.content, m.is_emoji, m.created_at,
 		       u.id, u.username, u.first_name, u.last_name, u.avatar
 		FROM messages m
@@ -152,99 +124,6 @@ func SaveMessage(senderID int, receiverID, groupID *int, content string, isEmoji
 	}
 	id, err := result.LastInsertId()
 	return int(id), err
-}
-
-func InsertNotification(n models.Notification) (int, error) {
-
-	var existingID int
-	err := database.DB.QueryRow(CHECK_EXISTING_NOTIFICATION,
-		n.UserID, n.SenderID, n.Type,
-		n.GroupID, n.GroupID,
-		n.EventID, n.EventID).Scan(&existingID)
-
-	if err == nil && existingID > 0 {
-
-		return existingID, nil
-	} else if err != nil && err != sql.ErrNoRows {
-
-		return 0, err
-	}
-
-	result, err := database.DB.Exec(INSERT_NOTIFICATION, n.UserID, n.SenderID, n.Type, n.Message, n.GroupID, n.EventID, time.Now())
-	if err != nil {
-		return 0, err
-	}
-	id, err := result.LastInsertId()
-	return int(id), err
-}
-
-func GetUnreadNotifications(userID int) ([]models.Notification, error) {
-	rows, err := database.DB.Query(SELECT_UNREAD_NOTIFICATIONS, userID)
-
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var notifications []models.Notification
-	for rows.Next() {
-		var n models.Notification
-		var groupID sql.NullInt64
-		var groupTitle sql.NullString
-		var eventID sql.NullInt64
-		var createdAt time.Time
-
-		if err := rows.Scan(
-			&n.ID,
-			&n.UserID,
-			&n.Type,
-			&n.Message,
-			&n.State,
-			&eventID,
-			&createdAt,
-			&n.Sender.ID,
-			&n.Sender.Username,
-			&n.Sender.FirstName,
-			&n.Sender.LastName,
-			&n.Sender.Avatar,
-			&n.Sender.IsPrivate,
-			&groupID,
-			&groupTitle,
-		); err != nil {
-			log.Printf("Error scanning notification: %v", err)
-			continue
-		}
-
-		if groupID.Valid {
-			n.GroupID = int(groupID.Int64)
-		}
-		if groupTitle.Valid {
-			n.GroupTitle = groupTitle.String
-		}
-		if eventID.Valid {
-			n.EventID = int(eventID.Int64)
-		}
-		n.CreatedAt = createdAt.Format(time.RFC3339)
-
-		notifications = append(notifications, n)
-	}
-
-	return notifications, nil
-}
-
-func UpdateNotificationStatus(id int, state string) error {
-	_, err := database.DB.Exec(UPDATE_NOTIFICATION_STATUS, state, id)
-	return err
-}
-
-func UpdateInvitationStatus(receiverID, senderID int, state string) error {
-	_, err := database.DB.Exec(UPDATE_INVITATION_STATUS, state, receiverID, senderID)
-	return err
-}
-
-func DeleteNotificationByType(userID, senderID, groupID int, targetType string) error {
-	_, err := database.DB.Exec(DELETE_NOTIFICATION_BY_TYPE, userID, senderID, groupID, targetType)
-	return err
 }
 
 func DeleteNotificationByID(id int) error {
