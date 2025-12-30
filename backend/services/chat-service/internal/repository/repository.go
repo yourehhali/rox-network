@@ -72,7 +72,30 @@ var (
 		ORDER BY m.created_at DESC
 		LIMIT ? OFFSET ?
 	`
+
+	SELECT_UNREAD_COUNT_PRIVATE = `
+		SELECT COUNT(*) FROM messages 
+		WHERE receiver_id = ? AND is_read = 0
+	`
+	UPDATE_MESSAGES_READ_PRIVATE = `
+		UPDATE messages SET is_read = 1 
+		WHERE receiver_id = ? AND sender_id = ? AND is_read = 0
+	`
 )
+
+func GetUnreadMessageCount(userID int) (int, error) {
+	var count int
+	err := database.DB.QueryRow(SELECT_UNREAD_COUNT_PRIVATE, userID).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func MarkPrivateMessagesRead(userID, senderID int) error {
+	_, err := database.DB.Exec(UPDATE_MESSAGES_READ_PRIVATE, userID, senderID)
+	return err
+}
 
 func AddChatClient(userID int, sessionID string, conn *websocket.Conn) {
 	ChatMutex.Lock()
@@ -132,7 +155,7 @@ func SaveMessage(senderID int, receiverID, groupID *int, content string, isEmoji
 }
 
 func InsertNotification(n models.Notification) (int, error) {
-	
+
 	var existingID int
 	err := database.DB.QueryRow(CHECK_EXISTING_NOTIFICATION,
 		n.UserID, n.SenderID, n.Type,
@@ -140,10 +163,10 @@ func InsertNotification(n models.Notification) (int, error) {
 		n.EventID, n.EventID).Scan(&existingID)
 
 	if err == nil && existingID > 0 {
-		
+
 		return existingID, nil
 	} else if err != nil && err != sql.ErrNoRows {
-		
+
 		return 0, err
 	}
 
@@ -276,7 +299,6 @@ func GetPrivateMessages(userID, otherUserID, limit, offset int) ([]models.Messag
 		messages = append(messages, msg)
 	}
 
-	
 	for i, j := 0, len(messages)-1; i < j; i, j = i+1, j-1 {
 		messages[i], messages[j] = messages[j], messages[i]
 	}
@@ -307,7 +329,6 @@ func GetGroupMessages(groupID, limit, offset int) ([]models.Message, error) {
 		messages = append(messages, msg)
 	}
 
-	
 	for i, j := 0, len(messages)-1; i < j; i, j = i+1, j-1 {
 		messages[i], messages[j] = messages[j], messages[i]
 	}

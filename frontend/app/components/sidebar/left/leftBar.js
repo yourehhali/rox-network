@@ -4,6 +4,7 @@ import styles from "./leftBar.module.css";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "../../../../context/AuthContext";
 import { usePosts } from "../../../../context/PostsContext";
+import { useChat } from "../../../../context/ChatContext";
 import { useToast } from "../../../../context/ToastContext";
 import { useState, useEffect } from "react";
 import { apiFetch } from "../../../../lib/api";
@@ -25,6 +26,7 @@ export default function LeftBar() {
   const pathname = usePathname();
   const { user } = useAuth();
   const { addToast } = useToast();
+  const { unreadCount } = useChat();
   const { triggerFeedRefresh, triggerGroupRefresh } = usePosts();
   
   const [showCreatePostModal, setShowCreatePostModal] = useState(false);
@@ -148,6 +150,7 @@ export default function LeftBar() {
 
             <a className={styles.menuItem} onClick={() => navigateTo("/chat")}>
               <MessageCircle />
+              {unreadCount > 0 && <span className={styles.badge}>{unreadCount > 99 ? '99+' : unreadCount}</span>}
             </a>
 
             <a

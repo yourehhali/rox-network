@@ -17,10 +17,21 @@ func main() {
 	}
 	database.InitDB(dbPath)
 
-	
+	migrationsPath := os.Getenv("MIGRATIONS_PATH")
+	if migrationsPath == "" {
+		migrationsPath = "../../pkg/db/migrations/sqlite"
+	}
+	if err := database.RunMigrations(database.DB, migrationsPath); err != nil {
+		log.Printf("Warning: Failed to run migrations: %v", err)
+	} else {
+		fmt.Println("Database migrations applied successfully.")
+	}
+
 	http.HandleFunc("/chat/ws", handlers.ChatWebSocket)
 	http.HandleFunc("/chat/private/history", handlers.GetPrivateChatHistory)
 	http.HandleFunc("/chat/group/history", handlers.GetGroupChatHistory)
+	http.HandleFunc("/chat/unread/count", handlers.GetUnreadCount)
+	http.HandleFunc("/chat/private/read", handlers.MarkPrivateRead)
 
 	port := ":8085"
 	fmt.Printf("Chat Service running on %s\n", port)

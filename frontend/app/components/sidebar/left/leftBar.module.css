@@ -82,6 +82,7 @@
     height: 40px;
     width: 40px;
     transition: all 0.2s ease-in-out;
+    position: relative;
 }
 .menuItem svg{
     height: 18px;
@@ -90,6 +91,23 @@
     color: #F3FFAB;
     scale: 1.07;
     background-color: #F3FFAB33;
+}
+
+.badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #FF4444;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    height: 18px;
+    width: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #1A1A1A;
 }
 
 .choicePill {

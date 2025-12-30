@@ -238,6 +238,54 @@ func GetPrivateChatHistory(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(messages)
 }
 
+func GetUnreadCount(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("session")
+	var userID int
+	if err == nil {
+		userID, _ = sharedRepo.GetUserIDBySessionToken(cookie.Value)
+	}
+	if userID == 0 {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	count, err := repository.GetUnreadMessageCount(userID)
+	if err != nil {
+		http.Error(w, "Server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]int{"count": count})
+}
+
+func MarkPrivateRead(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("session")
+	var userID int
+	if err == nil {
+		userID, _ = sharedRepo.GetUserIDBySessionToken(cookie.Value)
+	}
+	if userID == 0 {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	senderIDStr := r.URL.Query().Get("sender_id")
+	senderID, err := strconv.Atoi(senderIDStr)
+	if err != nil {
+		http.Error(w, "Invalid sender_id", http.StatusBadRequest)
+		return
+	}
+
+	err = repository.MarkPrivateMessagesRead(userID, senderID)
+	if err != nil {
+		http.Error(w, "Server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 
 func GetGroupChatHistory(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("session")

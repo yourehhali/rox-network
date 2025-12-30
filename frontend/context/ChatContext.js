@@ -1,22 +1,15 @@
 "use client";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useAuth } from "./AuthContext";
-import { toMediaUrl } from "../lib/api";
+import { toMediaUrl, apiFetch } from "../lib/api";
 
 const ChatContext = createContext(undefined);
 
 export function ChatProvider({ children }) {
   const { user } = useAuth();
   const wsRef = useRef(null);
-  
-  
-  
-  
-  
-  
-  
-  
-  
+  const [unreadCount, setUnreadCount] = useState(0);
+
   const subscribersRef = useRef(new Set());
 
   const subscribe = (callback) => {
@@ -24,8 +17,22 @@ export function ChatProvider({ children }) {
     return () => subscribersRef.current.delete(callback);
   };
 
+  const fetchUnreadCount = async () => {
+    if (!user) return;
+    try {
+      const res = await apiFetch("/chat/unread/count");
+      if (res.ok) {
+        const data = await res.json();
+        setUnreadCount(data.count || 0);
+      }
+    } catch (e) {
+      console.error("Failed to fetch unread count", e);
+    }
+  };
+
   useEffect(() => {
     if (!user) {
+      setUnreadCount(0);
       if (wsRef.current) {
         wsRef.current.close();
         wsRef.current = null;
@@ -33,7 +40,8 @@ export function ChatProvider({ children }) {
       return;
     }
 
-    
+    fetchUnreadCount();
+
     const connect = () => {
       if (wsRef.current?.readyState === WebSocket.OPEN) return;
 
@@ -47,7 +55,9 @@ export function ChatProvider({ children }) {
       ws.onmessage = (ev) => {
         try {
           const msg = JSON.parse(ev.data);
-          
+          if (msg.type === "private_message") {
+            fetchUnreadCount();
+          }
           subscribersRef.current.forEach(cb => cb(msg));
         } catch (e) {
           
@@ -81,7 +91,7 @@ export function ChatProvider({ children }) {
   };
 
   return (
-    <ChatContext.Provider value={{ sendMessage, subscribe, isConnected: !!wsRef.current }}>
+    <ChatContext.Provider value={{ sendMessage, subscribe, isConnected: !!wsRef.current, unreadCount, refreshUnreadCount: fetchUnreadCount }}>
       {children}
     </ChatContext.Provider>
   );
