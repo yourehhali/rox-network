@@ -12,6 +12,12 @@
 
 ## Quick Start
 
+### Docker (Recommended)
+- Run `docker-compose up --build`
+- Frontend: http://localhost:3000
+- API: http://localhost:8080
+
+### Manual
 - Start all services and frontend
   - Run [start-all.sh](file:///Users/macadmin/Desktop/my-area/repos-to-rust/rox-network/start-all.sh)
 - Environment variables

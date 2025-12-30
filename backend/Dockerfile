@@ -37,8 +37,8 @@ WORKDIR /app
 # Copy the binary
 COPY --from=builder /app/binary /app/service
 
-# Copy database schema (required by some services)
-COPY --from=builder /app/database/schema.sql /app/database/schema.sql
+# Copy database migrations
+COPY --from=builder /app/pkg/db/migrations /app/pkg/db/migrations
 
 # Create uploads directory
 RUN mkdir -p /app/uploads
