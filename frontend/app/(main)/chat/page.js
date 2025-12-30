@@ -26,6 +26,7 @@ export default function ChatPage() {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const prevScrollHeightRef = useRef(0);
+  const lastFetchRef = useRef(0);
 
   useEffect(() => {
     activeChatRef.current = activeChat;
@@ -109,6 +110,7 @@ export default function ChatPage() {
     setMessages([]);
     setHasMore(true);
     setLoadingMore(false);
+    lastFetchRef.current = 0;
 
     try {
       let url = "";
@@ -131,6 +133,8 @@ export default function ChatPage() {
 
   const loadMoreMessages = async () => {
     if (loadingMore || !hasMore || !activeChat) return;
+    const now = Date.now();
+    if (now - lastFetchRef.current < 500) return;
 
     setLoadingMore(true);
     if (chatContainerRef.current) {
@@ -150,11 +154,15 @@ export default function ChatPage() {
         if (res.ok) {
             const data = await res.json();
             const newMessages = Array.isArray(data) ? data : [];
-            
+            const newIds = new Set(newMessages.map(m => m.id));
+            lastFetchRef.current = Date.now();
             if (newMessages.length < 10) setHasMore(false);
             
             if (newMessages.length > 0) {
-                setMessages((prev) => [...newMessages, ...prev]);
+                setMessages((prev) => {
+                  const filteredPrev = prev.filter(m => !newIds.has(m.id));
+                  return [...newMessages, ...filteredPrev];
+                });
             } else {
                 setLoadingMore(false);
             }
@@ -171,14 +179,14 @@ export default function ChatPage() {
         const newScrollHeight = chatContainerRef.current.scrollHeight;
         const diff = newScrollHeight - prevScrollHeightRef.current;
         if (diff > 0) {
-            chatContainerRef.current.scrollTop = diff;
+            chatContainerRef.current.scrollTop = diff + 1;
         }
         setLoadingMore(false);
     }
   }, [messages, loadingMore]);
 
   const onScroll = (e) => {
-    if (e.target.scrollTop === 0 && hasMore) {
+    if (e.target.scrollTop <= 5 && hasMore && !loadingMore) {
         loadMoreMessages();
     }
   };
@@ -291,7 +299,7 @@ export default function ChatPage() {
             >
               {loadingMore && <div style={{ textAlign: 'center', padding: '10px', color: '#888' }}>Loading...</div>}
               {messages.map((m, i) => (
-                <div key={m.id || i} className={`${style.message} ${m.sender_id === user?.id ? style.own : ''} ${m.is_emoji ? style.bigEmoji : ''}`}>
+                <div key={`${m.id}-${m.created_at || i}`} className={`${style.message} ${m.sender_id === user?.id ? style.own : ''} ${m.is_emoji ? style.bigEmoji : ''}`}>
                   <span className={style.sender}>{m.sender?.username || (m.sender_id === user?.id ? 'You' : m.sender_id)}</span>
                   <p>{m.content}</p>
                 </div>
