@@ -60,7 +60,8 @@ var (
 		FROM messages m
 		JOIN users u ON m.sender_id = u.id
 		WHERE (m.sender_id = ? AND m.receiver_id = ?) OR (m.sender_id = ? AND m.receiver_id = ?)
-		ORDER BY m.created_at ASC
+		ORDER BY m.created_at DESC
+		LIMIT ? OFFSET ?
 	`
 	SELECT_GROUP_MESSAGES = `
 		SELECT m.id, m.sender_id, m.content, m.is_emoji, m.created_at,
@@ -68,7 +69,8 @@ var (
 		FROM messages m
 		JOIN users u ON m.sender_id = u.id
 		WHERE m.group_id = ?
-		ORDER BY m.created_at ASC
+		ORDER BY m.created_at DESC
+		LIMIT ? OFFSET ?
 	`
 )
 
@@ -251,8 +253,8 @@ func IsUserGroupMember(userID, groupID int) (bool, error) {
 	return count > 0, nil
 }
 
-func GetPrivateMessages(userID, otherUserID int) ([]models.Message, error) {
-	rows, err := database.DB.Query(SELECT_PRIVATE_MESSAGES, userID, otherUserID, otherUserID, userID)
+func GetPrivateMessages(userID, otherUserID, limit, offset int) ([]models.Message, error) {
+	rows, err := database.DB.Query(SELECT_PRIVATE_MESSAGES, userID, otherUserID, otherUserID, userID, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -273,11 +275,17 @@ func GetPrivateMessages(userID, otherUserID int) ([]models.Message, error) {
 		msg.ReceiverID = &otherUserID
 		messages = append(messages, msg)
 	}
+
+	// Reverse messages to return chronological order
+	for i, j := 0, len(messages)-1; i < j; i, j = i+1, j-1 {
+		messages[i], messages[j] = messages[j], messages[i]
+	}
+
 	return messages, nil
 }
 
-func GetGroupMessages(groupID int) ([]models.Message, error) {
-	rows, err := database.DB.Query(SELECT_GROUP_MESSAGES, groupID)
+func GetGroupMessages(groupID, limit, offset int) ([]models.Message, error) {
+	rows, err := database.DB.Query(SELECT_GROUP_MESSAGES, groupID, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -298,5 +306,11 @@ func GetGroupMessages(groupID int) ([]models.Message, error) {
 		msg.GroupID = &groupID
 		messages = append(messages, msg)
 	}
+
+	// Reverse messages to return chronological order
+	for i, j := 0, len(messages)-1; i < j; i, j = i+1, j-1 {
+		messages[i], messages[j] = messages[j], messages[i]
+	}
+
 	return messages, nil
 }

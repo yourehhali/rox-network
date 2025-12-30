@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useLayoutEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useChat } from "@/context/ChatContext";
 import { useToast } from "@/context/ToastContext";
@@ -21,6 +21,11 @@ export default function ChatPage() {
 
   const activeChatRef = useRef(activeChat);
   const inputRef = useRef(null);
+  const messagesEndRef = useRef(null);
+  const chatContainerRef = useRef(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const prevScrollHeightRef = useRef(0);
 
   useEffect(() => {
     activeChatRef.current = activeChat;
@@ -70,15 +75,23 @@ export default function ChatPage() {
         const currentActive = activeChatRef.current;
         if (!currentActive) return;
 
+        let shouldScroll = false;
+
         if (msg.type === "private_message" && currentActive.type === "private") {
            // Only add message if it belongs to the current active chat
            if (msg.sender_id === currentActive.id || msg.receiver_id === currentActive.id) {
               setMessages((prev) => [...prev, msg]);
+              shouldScroll = true;
            }
         } else if (msg.type === "group_message" && currentActive.type === "group") {
            if (msg.group_id === currentActive.id) {
               setMessages((prev) => [...prev, msg]);
+              shouldScroll = true;
            }
+        }
+        
+        if (shouldScroll) {
+            setTimeout(scrollToBottom, 100);
         }
     });
 
@@ -87,22 +100,87 @@ export default function ChatPage() {
     };
   }, []);
 
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   const openChat = async (target) => {
     setActiveChat(target);
+    setMessages([]);
+    setHasMore(true);
+    setLoadingMore(false);
+
     try {
       let url = "";
       if (target.type === "private") {
-        url = `/chat/private/history?user_id=${target.id}`;
+        url = `/chat/private/history?user_id=${target.id}&limit=10&offset=0`;
       } else if (target.type === "group") {
-        url = `/chat/group/history?group_id=${target.id}`;
+        url = `/chat/group/history?group_id=${target.id}&limit=10&offset=0`;
       }
       
       const res = await apiFetch(url);
       if (res.ok) {
         const data = await res.json();
-        setMessages(Array.isArray(data) ? data : []);
+        const initialMessages = Array.isArray(data) ? data : [];
+        setMessages(initialMessages);
+        if (initialMessages.length < 10) setHasMore(false);
+        setTimeout(scrollToBottom, 100);
       }
     } catch (_) {}
+  };
+
+  const loadMoreMessages = async () => {
+    if (loadingMore || !hasMore || !activeChat) return;
+
+    setLoadingMore(true);
+    if (chatContainerRef.current) {
+        prevScrollHeightRef.current = chatContainerRef.current.scrollHeight;
+    }
+
+    try {
+        const offset = messages.length;
+        let url = "";
+        if (activeChat.type === "private") {
+            url = `/chat/private/history?user_id=${activeChat.id}&limit=10&offset=${offset}`;
+        } else if (activeChat.type === "group") {
+            url = `/chat/group/history?group_id=${activeChat.id}&limit=10&offset=${offset}`;
+        }
+
+        const res = await apiFetch(url);
+        if (res.ok) {
+            const data = await res.json();
+            const newMessages = Array.isArray(data) ? data : [];
+            
+            if (newMessages.length < 10) setHasMore(false);
+            
+            if (newMessages.length > 0) {
+                setMessages((prev) => [...newMessages, ...prev]);
+            } else {
+                setLoadingMore(false);
+            }
+        } else {
+            setLoadingMore(false);
+        }
+    } catch (_) {
+        setLoadingMore(false);
+    }
+  };
+
+  useLayoutEffect(() => {
+    if (loadingMore && chatContainerRef.current) {
+        const newScrollHeight = chatContainerRef.current.scrollHeight;
+        const diff = newScrollHeight - prevScrollHeightRef.current;
+        if (diff > 0) {
+            chatContainerRef.current.scrollTop = diff;
+        }
+        setLoadingMore(false);
+    }
+  }, [messages, loadingMore]);
+
+  const onScroll = (e) => {
+    if (e.target.scrollTop === 0 && hasMore) {
+        loadMoreMessages();
+    }
   };
 
   // Helper to check if string contains only emojis
@@ -167,7 +245,7 @@ export default function ChatPage() {
 
   return (
     <div className={style.middle}>
-      <aside className={style.sidebar}>
+      <aside className={`${style.sidebar} ${activeChat ? style.hiddenMobile : ''}`}>
         <h3>Friends</h3>
         <div className={style.list} style={{ flex: '0 0 auto', maxHeight: '40%' }}>
           {friends.map((f) => (
@@ -190,10 +268,15 @@ export default function ChatPage() {
           ))}
         </div>
       </aside>
-      <div className={style.chatArea}>
+      <div className={`${style.chatArea} ${!activeChat ? style.hiddenMobile : ''}`}>
         {activeChat ? (
           <>
             <header className={style.header}>
+              <button className={style.backButton} onClick={() => setActiveChat(null)}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m15 18-6-6 6-6"/>
+                </svg>
+              </button>
               {activeChat.type === 'private' ? (
                  <img src={activeChat.avatar} alt={activeChat.name} />
               ) : (
@@ -201,13 +284,19 @@ export default function ChatPage() {
               )}
               <span>{activeChat.name}</span>
             </header>
-            <div className={style.messages}>
+            <div 
+                className={style.messages} 
+                ref={chatContainerRef} 
+                onScroll={onScroll}
+            >
+              {loadingMore && <div style={{ textAlign: 'center', padding: '10px', color: '#888' }}>Loading...</div>}
               {messages.map((m, i) => (
                 <div key={m.id || i} className={`${style.message} ${m.sender_id === user?.id ? style.own : ''} ${m.is_emoji ? style.bigEmoji : ''}`}>
                   <span className={style.sender}>{m.sender?.username || (m.sender_id === user?.id ? 'You' : m.sender_id)}</span>
                   <p>{m.content}</p>
                 </div>
               ))}
+              <div ref={messagesEndRef} />
             </div>
             <div className={style.inputRow}>
               {showEmojiPicker && (

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../lib/api';
 import style from './login.module.css';
@@ -11,7 +12,14 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const { login, user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.push('/');
+    }
+  }, [user, loading, router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -45,6 +53,10 @@ export default function LoginPage() {
       setError('Invalid credentials');
     }
   };
+
+  if (loading || user) {
+    return null;
+  }
 
   return (
     <div className={style.container}>

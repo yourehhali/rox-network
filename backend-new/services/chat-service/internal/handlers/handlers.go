@@ -210,7 +210,25 @@ func GetPrivateChatHistory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	messages, err := repository.GetPrivateMessages(userID, otherUserID)
+	limitStr := r.URL.Query().Get("limit")
+	limit := 10
+	if limitStr != "" {
+		l, err := strconv.Atoi(limitStr)
+		if err == nil && l > 0 {
+			limit = l
+		}
+	}
+
+	offsetStr := r.URL.Query().Get("offset")
+	offset := 0
+	if offsetStr != "" {
+		o, err := strconv.Atoi(offsetStr)
+		if err == nil && o >= 0 {
+			offset = o
+		}
+	}
+
+	messages, err := repository.GetPrivateMessages(userID, otherUserID, limit, offset)
 	if err != nil {
 		http.Error(w, "Server error", http.StatusInternalServerError)
 		return
@@ -249,7 +267,25 @@ func GetGroupChatHistory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	messages, err := repository.GetGroupMessages(groupID)
+	limitStr := r.URL.Query().Get("limit")
+	limit := 10
+	if limitStr != "" {
+		l, err := strconv.Atoi(limitStr)
+		if err == nil && l > 0 {
+			limit = l
+		}
+	}
+
+	offsetStr := r.URL.Query().Get("offset")
+	offset := 0
+	if offsetStr != "" {
+		o, err := strconv.Atoi(offsetStr)
+		if err == nil && o >= 0 {
+			offset = o
+		}
+	}
+
+	messages, err := repository.GetGroupMessages(groupID, limit, offset)
 	if err != nil {
 		http.Error(w, "Server error", http.StatusInternalServerError)
 		return

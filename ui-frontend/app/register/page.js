@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../lib/api';
 import style from './register.module.css';
 import Link from 'next/link';
@@ -23,6 +24,13 @@ export default function RegisterPage() {
   const [avatar, setAvatar] = useState(null);
   const [error, setError] = useState('');
   const router = useRouter();
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.push('/');
+    }
+  }, [user, loading, router]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -91,6 +99,10 @@ export default function RegisterPage() {
       setError(err.message || 'An unexpected error occurred');
     }
   };
+
+  if (loading || user) {
+    return null;
+  }
 
   return (
     <div className={style.container}>
