@@ -11,7 +11,7 @@ trap cleanup SIGINT
 
 echo "Starting Backend Services..."
 
-cd backend-new
+cd backend
 
 mkdir -p database
 
@@ -56,7 +56,7 @@ go run api-gateway/cmd/api/main.go &
 cd ..
 
 echo "Starting Frontend (3000)..."
-cd ui-frontend
+cd frontend
 
 npm run dev &
 

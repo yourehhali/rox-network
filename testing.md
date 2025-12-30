@@ -1,3 +1,0 @@
-- Username: alice / Password: password123
-- Username: bob / Password: password123
-- Username: charlie / Password: password123

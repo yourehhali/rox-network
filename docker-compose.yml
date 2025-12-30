@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   frontend:
-    build: ./ui-frontend
+    build: ./frontend
     ports:
       - "3000:3000"
     environment:
@@ -12,7 +12,7 @@ services:
 
   api-gateway:
     build:
-      context: ./backend-new
+      context: ./backend
       args:
         SERVICE_NAME: api-gateway
     ports:
@@ -34,7 +34,7 @@ services:
 
   auth-service:
     build:
-      context: ./backend-new
+      context: ./backend
       args:
         SERVICE_NAME: auth-service
     ports:
@@ -46,7 +46,7 @@ services:
 
   user-service:
     build:
-      context: ./backend-new
+      context: ./backend
       args:
         SERVICE_NAME: user-service
     ports:
@@ -58,7 +58,7 @@ services:
 
   post-service:
     build:
-      context: ./backend-new
+      context: ./backend
       args:
         SERVICE_NAME: post-service
     ports:
@@ -70,7 +70,7 @@ services:
 
   media-service:
     build:
-      context: ./backend-new
+      context: ./backend
       args:
         SERVICE_NAME: media-service
     ports:
@@ -82,7 +82,7 @@ services:
 
   chat-service:
     build:
-      context: ./backend-new
+      context: ./backend
       args:
         SERVICE_NAME: chat-service
     ports:
@@ -94,7 +94,7 @@ services:
 
   group-service:
     build:
-      context: ./backend-new
+      context: ./backend
       args:
         SERVICE_NAME: group-service
     ports:
